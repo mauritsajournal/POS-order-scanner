@@ -54,3 +54,14 @@ export const orderLines = pgTable('order_lines', {
   line_total: integer('line_total').notNull(), // cents
   notes: text('notes'),
 });
+
+/**
+ * Per-tenant sequential order number counter.
+ * Used by the API to assign human-readable order numbers (SO-0001, SO-0002, ...).
+ * Atomic increment via INSERT ... ON CONFLICT ensures no duplicates under concurrency.
+ */
+export const orderSequences = pgTable('order_sequences', {
+  tenant_id: uuid('tenant_id').primaryKey().references(() => tenants.id),
+  prefix: text('prefix').notNull().default('SO'),
+  next_number: integer('next_number').notNull().default(1),
+});
