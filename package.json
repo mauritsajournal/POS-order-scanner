@@ -19,6 +19,11 @@
     "turbo": "^2.5.0",
     "prettier": "^3.5.0"
   },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "^19.1.0"
+    }
+  },
   "packageManager": "pnpm@10.32.1",
   "engines": {
     "node": ">=22"

@@ -57,8 +57,10 @@ export default async function OrdersPage() {
             ) : (
               orders.map((order) => {
                 const status = order.status as OrderStatus;
-                const customer = order.customers as { company_name: string } | null;
-                const event = order.events as { name: string } | null;
+                const customerData = order.customers as unknown;
+                const customer = Array.isArray(customerData) ? customerData[0] as { company_name: string } | undefined : customerData as { company_name: string } | null;
+                const eventData = order.events as unknown;
+                const event = Array.isArray(eventData) ? eventData[0] as { name: string } | undefined : eventData as { name: string } | null;
                 return (
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">

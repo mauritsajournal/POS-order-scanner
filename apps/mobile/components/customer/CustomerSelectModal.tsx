@@ -33,7 +33,7 @@ export function CustomerSelectModal({
           c.company_name.toLowerCase().includes(q) ||
           (c.contact_name?.toLowerCase().includes(q) ?? false) ||
           (c.email?.toLowerCase().includes(q) ?? false) ||
-          (c.city?.toLowerCase().includes(q) ?? false)
+          (c.address?.city?.toLowerCase().includes(q) ?? false)
         );
       });
 
@@ -75,7 +75,7 @@ export function CustomerSelectModal({
                 <Text style={styles.contact}>{item.contact_name}</Text>
               )}
               <Text style={styles.meta}>
-                {[item.city, item.country].filter(Boolean).join(', ')}
+                {[item.address?.city, item.address?.country].filter(Boolean).join(', ')}
                 {item.email ? ` · ${item.email}` : ''}
               </Text>
             </TouchableOpacity>
