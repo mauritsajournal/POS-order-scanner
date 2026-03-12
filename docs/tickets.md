@@ -1981,3 +1981,356 @@ API-007 (order numbers)
 ```
 
 **PoC exit criteria:** Scan a real barcode on iPad → product found in local DB → added to cart → select customer → submit order offline → order syncs to Supabase → order visible on web dashboard.
+
+---
+
+## 18. Code Quality & Refactors (QA)
+
+*Added 2026-03-12 — from automated codebase analysis against blueprint, market analysis, and tech stack research.*
+
+### [QA-001] Fix auth context silent failure in sync upload — `NOT STARTED`
+**Priority:** P0 | **Effort:** XS | **Depends on:** API-001
+
+If `user` is undefined in the upload handler, `tenantId` and `userId` silently become `undefined`. Orders could be inserted without tenant isolation, breaking multi-tenancy.
+
+**Acceptance Criteria:**
+- [ ] Upload handler returns 401 if `user`, `tenantId`, or `userId` are missing
+- [ ] No order can be inserted without valid tenant context
+- [ ] Test: unauthenticated request returns 401
+
+---
+
+### [QA-002] Fix order line type assertions without validation — `NOT STARTED`
+**Priority:** P0 | **Effort:** XS | **Depends on:** API-002
+
+Upload handler uses raw `as` casts on `data.quantity`, `data.unit_price` etc. If values are `undefined` or `NaN`, the SQL insert will silently fail or corrupt data.
+
+**Acceptance Criteria:**
+- [ ] All order line fields are validated with explicit type checks before insert
+- [ ] `quantity` must be a positive integer
+- [ ] `unit_price` must be a non-negative integer (cents)
+- [ ] Invalid data returns descriptive error
+
+---
+
+### [QA-003] Fix mobile order submission missing line discount — `NOT STARTED`
+**Priority:** P0 | **Effort:** XS | **Depends on:** MOB-012
+
+`order/new.tsx` calculates `line_total` as `unitPrice * quantity` without applying `discountPct`. Server receives incorrect totals, causing discrepancy between device display and persisted data.
+
+**Acceptance Criteria:**
+- [ ] `line_total` uses shared `lineTotal()` utility from `@scanorder/shared`
+- [ ] Discount percentage is included in submitted order data
+- [ ] Cart total matches submitted order total
+
+---
+
+### [QA-004] Sync Zod schema with shared types (session_id, device_id) — `NOT STARTED`
+**Priority:** P0 | **Effort:** XS | **Depends on:** PKG-002
+
+`createOrderSchema` does not include `session_id` or `device_id` fields that exist in the `Order` shared type. These fields are silently dropped during Zod validation.
+
+**Acceptance Criteria:**
+- [ ] `createOrderSchema` includes `session_id` (uuid, nullable)
+- [ ] `createOrderSchema` includes `device_id` (string, nullable)
+- [ ] Schema matches `Order` type exactly
+
+---
+
+### [QA-005] Add Zod validation for PowerSync upload payload — `NOT STARTED`
+**Priority:** P0 | **Effort:** S | **Depends on:** API-002
+
+The sync upload handler does not validate the top-level `transactions` structure. Malformed payloads could crash the handler or be silently ignored. DOS risk.
+
+**Acceptance Criteria:**
+- [ ] Zod schema for `{ transactions: [{ ops: [{ op, table, id, data }] }] }`
+- [ ] Invalid payload returns 400 with descriptive error
+- [ ] Oversized payloads rejected (max 100 ops per request)
+
+---
+
+### [QA-006] Add auth guard to web dashboard pages — `NOT STARTED`
+**Priority:** P0 | **Effort:** S | **Depends on:** WEB-002
+
+Dashboard pages query Supabase without checking authentication. Unauthenticated users can access `/orders`, `/orders/[id]`, and dashboard home. Errors are returned but not handled.
+
+**Acceptance Criteria:**
+- [ ] Next.js middleware redirects unauthenticated users to `/login` for all `/(dashboard)/*` routes
+- [ ] Dashboard layout checks session before rendering
+- [ ] Supabase query errors result in user-visible feedback, not silent failure
+
+---
+
+### [QA-007] Wrap order + line inserts in database transaction — `NOT STARTED`
+**Priority:** P0 | **Effort:** S | **Depends on:** API-002
+
+Orders and order lines are inserted separately. If order succeeds but a line fails, the database has an orphaned order with missing lines and no rollback.
+
+**Acceptance Criteria:**
+- [ ] Order + all order lines inserted in a single PostgreSQL transaction
+- [ ] If any line fails, entire order is rolled back
+- [ ] Stock decrements are part of the same transaction
+
+---
+
+### [QA-008] Fix Customer type missing city/country fields — `NOT STARTED`
+**Priority:** P0 | **Effort:** XS | **Depends on:** PKG-001
+
+`CustomerSelectModal.tsx` references `customer.city` and `customer.country` but the `Customer` shared type has no `city` or `country` fields. This causes typecheck failure.
+
+**Acceptance Criteria:**
+- [ ] `Customer` type includes `city` and `country` (or `address` JSONB is properly typed)
+- [ ] `pnpm typecheck` passes for `@scanorder/mobile`
+- [ ] Customer modal search by city still works
+
+---
+
+### [QA-009] Fix web build — AuthLayout return type annotation — `NOT STARTED`
+**Priority:** P0 | **Effort:** XS | **Depends on:** WEB-001
+
+`apps/web/app/(auth)/layout.tsx` fails to build because the inferred return type references transitive `@types/react` from pnpm's `.pnpm` directory. Classic pnpm strict hoisting issue.
+
+**Acceptance Criteria:**
+- [ ] Add explicit return type to `AuthLayout` component
+- [ ] `pnpm build` passes for `@scanorder/web`
+
+---
+
+### [QA-010] Fix lint — add eslint as dependency — `NOT STARTED`
+**Priority:** P0 | **Effort:** XS | **Depends on:** INFRA-003
+
+`pnpm lint` fails because `eslint` binary is not installed. The lint script references `eslint` but it's not in devDependencies.
+
+**Acceptance Criteria:**
+- [ ] `eslint` added to root or relevant package devDependencies
+- [ ] `pnpm lint` runs without "command not found" errors
+- [ ] At least `@scanorder/shared` passes lint
+
+---
+
+### [QA-011] Add rate limiting to sync endpoint — `NOT STARTED`
+**Priority:** P1 | **Effort:** S | **Depends on:** API-002
+
+The `/api/sync/upload` endpoint has no rate limiting. A malicious or buggy device could flood the endpoint, causing DOS.
+
+**Acceptance Criteria:**
+- [ ] Rate limiting middleware on `/api/sync/*` routes
+- [ ] Per-tenant limit (e.g., 100 requests/minute)
+- [ ] 429 response with `Retry-After` header
+- [ ] Cloudflare KV or in-memory store for rate state
+
+---
+
+### [QA-012] Fix CORS hardcoded origins — `NOT STARTED`
+**Priority:** P1 | **Effort:** XS | **Depends on:** INFRA-009
+
+CORS origins are hardcoded to `localhost:3000` and `localhost:8081`. Production deployment will fail or be insecure.
+
+**Acceptance Criteria:**
+- [ ] CORS origins read from environment variable `ALLOWED_ORIGINS`
+- [ ] Default to localhost in development
+- [ ] Production origins configurable via Cloudflare secrets
+
+---
+
+### [QA-013] Replace Google connectivity check with own API heartbeat — `NOT STARTED`
+**Priority:** P1 | **Effort:** XS | **Depends on:** MOB-016
+
+`useNetwork` hook pings `google.com/generate_204` which can be blocked by corporate networks or firewalls, causing false offline detection.
+
+**Acceptance Criteria:**
+- [ ] Connectivity check hits ScanOrder's own `/health` endpoint
+- [ ] Fallback to `@react-native-community/netinfo` for basic connectivity
+- [ ] No dependency on third-party URLs for offline detection
+
+---
+
+### [QA-014] Centralize hardcoded configuration values — `NOT STARTED`
+**Priority:** P1 | **Effort:** S | **Depends on:** INFRA-001
+
+Hardcoded values scattered across the codebase: network timeout (3000ms), poll interval (30000ms), barcode min length (8), CORS origins, scan debounce (500ms).
+
+**Acceptance Criteria:**
+- [ ] Shared config module in `packages/shared/src/config/`
+- [ ] All hardcoded values moved to named constants
+- [ ] Values overridable via environment variables where applicable
+
+---
+
+### [QA-015] Use shared formatPrice consistently across web dashboard — `NOT STARTED`
+**Priority:** P2 | **Effort:** XS | **Depends on:** PKG-003
+
+Web dashboard uses inline `Intl.NumberFormat` calls instead of the shared `formatPrice` utility, creating inconsistency risk and unnecessary object creation per render.
+
+**Acceptance Criteria:**
+- [ ] All price formatting in `apps/web/` uses `formatPrice` from `@scanorder/shared`
+- [ ] No inline `Intl.NumberFormat` calls in web app
+
+---
+
+### [QA-016] Add error states to mobile data hooks — `NOT STARTED`
+**Priority:** P1 | **Effort:** S | **Depends on:** MOB-003
+
+`useProducts` and `useOrders` hooks return empty/null with no error indication. When PowerSync is implemented, failures will be silent.
+
+**Acceptance Criteria:**
+- [ ] Hooks return `{ data, loading, error }` pattern
+- [ ] Error state shown in UI (toast or inline message)
+- [ ] Loading state shows skeleton/spinner
+
+---
+
+### [QA-017] Add tenant_id to mobile order creation — `NOT STARTED`
+**Priority:** P0 | **Effort:** XS | **Depends on:** MOB-012
+
+`order/new.tsx` creates orders without `tenant_id`. The API infers it from auth context, but on shared devices this is fragile. Mobile should always include `tenant_id` and the API should validate it matches auth context.
+
+**Acceptance Criteria:**
+- [ ] Mobile order object includes `tenant_id` from auth store
+- [ ] API validates `order.tenant_id === authUser.tenantId`
+- [ ] Mismatch returns 403
+
+---
+
+## 19. Integration & Unit Tests (TEST-NEW)
+
+*Added 2026-03-12 — tests designed from codebase analysis. These test the critical paths that currently have zero coverage.*
+
+### [TEST-N001] Unit tests for shared pricing utilities — `NOT STARTED`
+**Priority:** P0 | **Effort:** S | **Depends on:** PKG-003, QA-010
+
+Zero test coverage on price formatting, tax calculation, and line total computation. These are used in cart, order submission, and web display.
+
+**Acceptance Criteria:**
+- [ ] Test `formatPrice` with EUR, 0 cents, negative, large values, different locales
+- [ ] Test `lineTotal` with quantity=1, quantity=0, with discount, 100% discount
+- [ ] Test `calculateTax` with 2100 basis points (21%), 0%, edge cases
+- [ ] Test `calculateOrderTotals` with multiple lines, mixed tax rates, discounts
+- [ ] Test rounding behavior (half-cent rounding)
+- [ ] All tests pass via `pnpm test`
+
+---
+
+### [TEST-N002] Unit tests for barcode validation — `NOT STARTED`
+**Priority:** P0 | **Effort:** S | **Depends on:** PKG-003
+
+Barcode validation (EAN-13, EAN-8, UPC-A check digit) has no tests. Invalid barcodes could be accepted or valid ones rejected.
+
+**Acceptance Criteria:**
+- [ ] Test valid EAN-13 (e.g., `8710341001234`) returns true
+- [ ] Test invalid EAN-13 check digit returns false
+- [ ] Test valid EAN-8, valid UPC-A
+- [ ] Test edge cases: empty string, non-numeric, wrong length
+- [ ] Test `detectBarcodeType` returns correct format
+
+---
+
+### [TEST-N003] Unit tests for Zod validation schemas — `NOT STARTED`
+**Priority:** P0 | **Effort:** S | **Depends on:** PKG-002
+
+Zod schemas for orders, customers, and products have no tests. Edge cases (negative quantities, missing required fields, UUID format) are not verified.
+
+**Acceptance Criteria:**
+- [ ] Test `createOrderSchema` accepts valid order, rejects missing `customer_id`
+- [ ] Test `orderLineSchema` rejects quantity=0, quantity=-1, non-integer
+- [ ] Test `createCustomerSchema` requires `company_name`
+- [ ] Test `productSearchSchema` with valid and invalid inputs
+- [ ] Test that schema types match shared TypeScript types
+
+---
+
+### [TEST-N004] Integration test for API sync upload handler — `NOT STARTED`
+**Priority:** P0 | **Effort:** M | **Depends on:** API-002, QA-005
+
+The most critical API endpoint has no tests. Need to verify: auth validation, idempotency, order number generation, line item insertion, stock decrement, error handling.
+
+**Acceptance Criteria:**
+- [ ] Test: unauthenticated request → 401
+- [ ] Test: valid order upload → 200, order created with sequential number
+- [ ] Test: duplicate order UUID → 200 (idempotent, no duplicate insert)
+- [ ] Test: invalid payload (missing fields) → 400
+- [ ] Test: order with 0 lines → appropriate error
+- [ ] Test: stock decrement after successful order
+- [ ] Uses Miniflare or Vitest with Cloudflare Workers test harness
+
+---
+
+### [TEST-N005] Unit tests for cart store (Zustand) — `NOT STARTED`
+**Priority:** P1 | **Effort:** S | **Depends on:** MOB-009
+
+Cart store manages add/remove/update/clear operations and total calculations. No tests verify correctness.
+
+**Acceptance Criteria:**
+- [ ] Test `addItem` — new product creates line, same product increments qty
+- [ ] Test `removeItem` — line removed from cart
+- [ ] Test `updateQuantity` — qty updated, qty=0 removes line
+- [ ] Test `clearCart` — all lines and customer cleared
+- [ ] Test `subtotal`, `taxAmount`, `total` calculations match shared utility
+- [ ] Test with discount applied
+
+---
+
+### [TEST-N006] Integration test for web auth flow — `NOT STARTED`
+**Priority:** P1 | **Effort:** M | **Depends on:** WEB-002
+
+No test for the login → dashboard → logout flow. Auth guards on dashboard pages are untested.
+
+**Acceptance Criteria:**
+- [ ] Test: unauthenticated user accessing `/` → redirected to `/login`
+- [ ] Test: successful login → redirected to `/`
+- [ ] Test: invalid credentials → error message shown
+- [ ] Test: authenticated user sees dashboard with KPI cards
+- [ ] Test: logout → redirected to `/login`, session cleared
+
+---
+
+### [TEST-N007] Integration test for order lifecycle (mobile → API → web) — `NOT STARTED`
+**Priority:** P1 | **Effort:** L | **Depends on:** MOB-012, API-002, WEB-004
+
+The core PoC flow — scan barcode, add to cart, submit order, see on web dashboard — has no end-to-end test.
+
+**Acceptance Criteria:**
+- [ ] Test: create order on mobile (mock PowerSync) → order data matches schema
+- [ ] Test: submit order to API → order persisted with correct tenant, user, lines
+- [ ] Test: order appears in web dashboard orders list
+- [ ] Test: order detail page shows correct line items and totals
+- [ ] Test: order totals match between mobile, API, and web
+
+---
+
+### [TEST-N008] Unit tests for JWT validation middleware — `NOT STARTED`
+**Priority:** P1 | **Effort:** S | **Depends on:** API-001
+
+JWT middleware validates tokens but has no tests. Edge cases: expired tokens, missing claims, invalid signatures, malformed headers.
+
+**Acceptance Criteria:**
+- [ ] Test: valid JWT → user context set with tenant_id, user_id, role
+- [ ] Test: expired JWT → 401
+- [ ] Test: missing `Authorization` header → 401
+- [ ] Test: invalid signature → 401
+- [ ] Test: JWT without `app_metadata.tenant_id` → 401
+- [ ] Test: Bearer prefix missing → 401
+
+---
+
+### [TEST-N009] Vitest configuration setup — `NOT STARTED`
+**Priority:** P0 | **Effort:** XS | **Depends on:** INFRA-001
+
+Vitest is listed as a dependency but no `vitest.config.ts` exists. `pnpm test` runs vitest but exits with code 1 because there are no test files.
+
+**Acceptance Criteria:**
+- [ ] `vitest.config.ts` in `packages/shared/`
+- [ ] `vitest.config.ts` in `apps/api/` (with Miniflare/Workers compat)
+- [ ] `pnpm test` succeeds when test files exist (no exit code 1 on empty)
+- [ ] Test file patterns: `**/*.test.ts`, `**/*.spec.ts`
+
+---
+
+## Ticket Count Summary (Updated)
+
+| Section | Tickets | New |
+|---------|---------|-----|
+| 1-17. Original tickets | 130 | — |
+| 18. Code Quality (QA) | 17 | +17 |
+| 19. Tests (TEST-NEW) | 9 | +9 |
+| **Total** | **156** | **+26** |
