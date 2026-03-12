@@ -1,31 +1,36 @@
 # ScanOrder — Technical Blueprint
 
-**Product:** Offline-first B2B trade show order scanning SaaS
-**Version:** v0.1 (MVP Blueprint)
-**Date:** March 2026
+**Product:** Offline-first POS & B2B order management SaaS
+**Version:** v0.2 (PoC → MVP Blueprint)
+**Date:** March 2026 (revised)
 **Status:** Pre-development specification
+
+> **Positioning:** ScanOrder is a Point of Sale (POS) application first, with deep B2B trade show features as its differentiator. It handles the full POS lifecycle: scanning, cart, checkout, receipts, cash management, and shift reconciliation — with offline-first sync and trade show event management as key USPs.
 
 ---
 
 ## Table of Contents
 
 1. [Architecture Overview](#1-architecture-overview)
-2. [Technology Stack](#2-technology-stack)
-3. [Project Structure (Monorepo)](#3-project-structure-monorepo)
-4. [Database Schema](#4-database-schema)
-5. [API Design](#5-api-design)
-6. [Offline-First Sync Architecture](#6-offline-first-sync-architecture)
-7. [Mobile App — Screens & Flows](#7-mobile-app--screens--flows)
-8. [Web Admin Dashboard](#8-web-admin-dashboard)
-9. [Barcode Scanning](#9-barcode-scanning)
-10. [Payment Processing](#10-payment-processing)
-11. [Integration Architecture](#11-integration-architecture)
-12. [Security Architecture](#12-security-architecture)
-13. [UI Mock Designs](#13-ui-mock-designs)
-14. [POS Reference Analysis](#14-pos-reference-analysis)
-15. [CI/CD & Deployment](#15-cicd--deployment)
-16. [Cost Breakdown](#16-cost-breakdown)
-17. [Development Roadmap](#17-development-roadmap)
+2. [PoC Strategy & Platform Priorities](#2-poc-strategy--platform-priorities)
+3. [Technology Stack](#3-technology-stack)
+4. [Project Structure (Monorepo)](#4-project-structure-monorepo)
+5. [Database Schema](#5-database-schema)
+6. [POS Features](#6-pos-features)
+7. [API Design](#7-api-design)
+8. [Offline-First Sync Architecture](#8-offline-first-sync-architecture)
+9. [Mobile App — Screens & Flows](#9-mobile-app--screens--flows)
+10. [Web Admin Dashboard](#10-web-admin-dashboard)
+11. [Barcode Scanning](#11-barcode-scanning)
+12. [Payment Processing](#12-payment-processing)
+13. [Integration Architecture](#13-integration-architecture)
+14. [Security Architecture](#14-security-architecture)
+15. [Scalability Strategy](#15-scalability-strategy)
+16. [UI Mock Designs](#16-ui-mock-designs)
+17. [POS Reference Analysis](#17-pos-reference-analysis)
+18. [CI/CD & Deployment](#18-cicd--deployment)
+19. [Cost Breakdown](#19-cost-breakdown)
+20. [Development Roadmap](#20-development-roadmap)
 
 ---
 
@@ -119,6 +124,63 @@
 | **Barcode scanning** | react-native-vision-camera | Best maintained, native ML Kit/Vision Kit, multi-code detection. |
 | **AI-assisted dev** | Claude via MCP | Every component has APIs/CLIs Claude can connect to and operate. |
 
+---
+
+## 2. PoC Strategy & Platform Priorities
+
+### PoC Goal
+
+Prove the core POS loop in **~3 weeks**: scan barcode → add to cart → select customer → submit order → see order on web dashboard. Everything else is post-PoC.
+
+### Platform Priority Order
+
+| Priority | Platform | Why | Timeline |
+|:--------:|----------|-----|----------|
+| **1** | **iPad (iOS)** | Trade show standard hardware. Best camera scanning. Real offline. | PoC (week 1-3) |
+| **2** | **Web dashboard** | Admin needs to see orders from day 1. Next.js, minimal features. | PoC (week 1-3) |
+| **3** | **iPhone (iOS)** | Same Expo codebase as iPad, just different layout. | Alpha (week 4-6) |
+| **4** | **Android tablet** | Second priority platform. Expo builds for Android from same code. | MVP (week 8+) |
+| **5** | **Android phone** | Lowest priority. Most trade show reps use iPads. | MVP (week 10+) |
+
+### PoC Scope (What's IN)
+
+- Expo app targeting iPad (iOS only)
+- Barcode scanning (camera + BT hardware scanner)
+- Product catalog (local SQLite via PowerSync)
+- Cart with quantity management
+- Customer selection
+- Order submission with offline queue
+- Sync to Supabase when online
+- Basic web dashboard: order list + order detail
+- Supabase Auth (email/password)
+- Single tenant (multi-tenancy infra in place but not enforced)
+
+### PoC Scope (What's OUT — deferred to MVP+)
+
+- Android builds
+- Price lists / volume discounts
+- Exact Online integration
+- WooCommerce integration
+- Mollie/Stripe payment processing
+- PDF generation
+- Analytics / reporting
+- Cash management / shift management
+- Returns / refunds
+- Onboarding wizard
+- App Store submission (TestFlight only)
+- Multi-tenant billing
+
+### Why iPad-First, Not Web PWA
+
+A web-based PoC (PWA) would be faster to deploy but:
+1. **Camera barcode scanning** is unreliable in mobile browsers (no ML Kit, poor autofocus control)
+2. **Offline** via Service Workers is fragile vs. native SQLite + PowerSync
+3. **Bluetooth scanner** support in browsers is experimental (Web Bluetooth API ≠ HID)
+4. **App Store presence** matters for B2B credibility — even TestFlight signals "real product"
+5. **Expo builds for iOS from Linux** — EAS Build handles it, no Mac needed
+
+The web dashboard (Next.js) covers the "accessible anywhere" angle.
+
 ### Why This Stack is Claude-Connectable
 
 Every component was selected with AI-assisted development in mind:
@@ -136,7 +198,7 @@ Every component was selected with AI-assisted development in mind:
 
 ---
 
-## 2. Technology Stack
+## 3. Technology Stack
 
 ### Complete Stack Specification
 
@@ -171,7 +233,7 @@ Every component was selected with AI-assisted development in mind:
 
 ---
 
-## 3. Project Structure (Monorepo)
+## 4. Project Structure (Monorepo)
 
 ```
 scanorder/
@@ -440,7 +502,7 @@ Offline-first B2B trade show order scanning SaaS. Monorepo with Turborepo + pnpm
 
 ---
 
-## 4. Database Schema
+## 5. Database Schema
 
 ### Entity Relationship Diagram
 
@@ -552,15 +614,40 @@ export const tenants = pgTable('tenants', {
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
   plan: planEnum('plan').notNull().default('starter'),
-  settings: jsonb('settings').default({}),
-  mollie_org_id: text('mollie_org_id'),          // Mollie Connect org
-  woo_url: text('woo_url'),                      // WooCommerce store URL
-  woo_consumer_key: text('woo_consumer_key'),     // encrypted
-  woo_consumer_secret: text('woo_consumer_secret'), // encrypted
-  exact_client_id: text('exact_client_id'),
-  exact_division: text('exact_division'),
+  settings: jsonb('settings').default({}),        // tenant-level config
+  default_currency: text('default_currency').default('EUR'),
+  default_tax_rate: integer('default_tax_rate').default(2100), // basis points (21% = 2100)
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Integration credentials live in their own table — not on tenants.
+// This scales to any number of integrations without schema changes.
+export const integrationTypeEnum = pgEnum('integration_type', [
+  'woocommerce', 'exact_online', 'mollie', 'stripe', 'shopify',
+]);
+
+export const integrations = pgTable('integrations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenant_id: uuid('tenant_id').notNull().references(() => tenants.id),
+  type: integrationTypeEnum('type').notNull(),
+  is_active: boolean('is_active').default(true),
+  credentials: jsonb('credentials').notNull(),    // encrypted at rest, type-specific
+  settings: jsonb('settings').default({}),        // sync settings, mappings
+  last_sync_at: timestamp('last_sync_at'),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// External ID mappings — connects local records to external system IDs
+export const integration_mappings = pgTable('integration_mappings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  integration_id: uuid('integration_id').notNull().references(() => integrations.id),
+  local_table: text('local_table').notNull(),     // 'products', 'orders', 'customers'
+  local_id: uuid('local_id').notNull(),
+  external_id: text('external_id').notNull(),      // WC product ID, Exact item ID, etc.
+  external_data: jsonb('external_data').default({}), // cache of external state
+  synced_at: timestamp('synced_at').defaultNow().notNull(),
 });
 
 // packages/db/src/schema/products.ts
@@ -578,12 +665,11 @@ export const products = pgTable('products', {
   category: text('category'),
   attributes: jsonb('attributes').default({}),    // flexible: color, size, weight, etc.
   is_active: boolean('is_active').default(true),
-  woo_product_id: integer('woo_product_id'),      // WooCommerce sync ID
-  exact_item_id: text('exact_item_id'),           // Exact Online sync ID
   is_deleted: boolean('is_deleted').default(false),
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
+// External IDs (woo_product_id, exact_item_id) now live in integration_mappings table
 
 // packages/db/src/schema/orders.ts
 export const orderStatusEnum = pgEnum('order_status', [
@@ -611,14 +697,109 @@ export const orders = pgTable('orders', {
   currency: text('currency').default('EUR'),
   notes: text('notes'),
   device_id: text('device_id'),                   // Which device created this order
+  payment_method: text('payment_method'),          // 'invoice', 'cash', 'card', 'ideal'
+  payment_terms: text('payment_terms'),            // 'net_30', 'net_60', 'immediate'
+  session_id: uuid('session_id').references(() => pos_sessions.id), // POS shift/session
   created_offline: boolean('created_offline').default(false),
   synced_at: timestamp('synced_at'),              // When order synced to server
-  woo_order_id: integer('woo_order_id'),          // WooCommerce sync ID
-  exact_order_id: text('exact_order_id'),         // Exact Online sync ID
   is_deleted: boolean('is_deleted').default(false),
+  // External IDs (woo_order_id, exact_order_id) now live in integration_mappings table
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
+```
+
+### POS-Specific Tables (Drizzle Schema)
+
+```typescript
+// packages/db/src/schema/pos-sessions.ts
+// Shift/session management — a POS fundamental
+
+export const sessionStatusEnum = pgEnum('session_status', [
+  'open',       // Currently active
+  'closing',    // Being reconciled
+  'closed',     // Reconciled and closed
+]);
+
+export const pos_sessions = pgTable('pos_sessions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenant_id: uuid('tenant_id').notNull().references(() => tenants.id),
+  user_id: uuid('user_id').notNull().references(() => users.id),
+  event_id: uuid('event_id').references(() => events.id),
+  device_id: text('device_id').notNull(),
+  status: sessionStatusEnum('status').notNull().default('open'),
+  opened_at: timestamp('opened_at').defaultNow().notNull(),
+  closed_at: timestamp('closed_at'),
+  opening_cash: integer('opening_cash').default(0),       // cents — cash float
+  closing_cash: integer('closing_cash'),                   // cents — counted at close
+  expected_cash: integer('expected_cash'),                  // cents — calculated
+  cash_difference: integer('cash_difference'),             // cents — over/short
+  total_orders: integer('total_orders').default(0),
+  total_revenue: integer('total_revenue').default(0),      // cents
+  notes: text('notes'),
+});
+
+// packages/db/src/schema/cash-movements.ts
+// Track all cash in/out during a session (not just order payments)
+
+export const cashMovementTypeEnum = pgEnum('cash_movement_type', [
+  'sale',           // Cash received from order
+  'refund',         // Cash returned for refund
+  'cash_in',        // Manual cash added (e.g., change float)
+  'cash_out',       // Manual cash removed (e.g., safe drop)
+]);
+
+export const cash_movements = pgTable('cash_movements', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  session_id: uuid('session_id').notNull().references(() => pos_sessions.id),
+  tenant_id: uuid('tenant_id').notNull().references(() => tenants.id),
+  type: cashMovementTypeEnum('type').notNull(),
+  amount: integer('amount').notNull(),              // cents (positive = in, negative = out)
+  order_id: uuid('order_id').references(() => orders.id),
+  reason: text('reason'),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});
+
+// packages/db/src/schema/tax-rates.ts
+// Proper VAT handling for EU B2B (including reverse charge)
+
+export const tax_rates = pgTable('tax_rates', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenant_id: uuid('tenant_id').notNull().references(() => tenants.id),
+  name: text('name').notNull(),                     // "BTW 21%", "BTW 9%", "Reverse Charge"
+  rate: integer('rate').notNull(),                   // basis points: 2100 = 21.00%
+  is_default: boolean('is_default').default(false),
+  applies_to: text('applies_to').default('all'),    // 'all', 'domestic', 'eu', 'non_eu'
+  is_reverse_charge: boolean('is_reverse_charge').default(false),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});
+```
+
+### Updated ERD (POS additions)
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│ pos_sessions │     │ cash_movements│     │  tax_rates   │
+├──────────────┤     ├──────────────┤     ├──────────────┤
+│ id (PK)      │◄───┐│ id (PK)      │     │ id (PK)      │
+│ tenant_id    │    ││ session_id   │     │ tenant_id    │
+│ user_id      │    ││ type         │     │ name         │
+│ event_id     │    ││ amount       │     │ rate         │
+│ device_id    │    ││ order_id     │     │ is_default   │
+│ status       │    ││ reason       │     │ is_reverse_  │
+│ opening_cash │    │└──────────────┘     │   charge     │
+│ closing_cash │    │                     └──────────────┘
+│ expected_cash│    │
+│ total_orders │    │  ┌──────────────┐   ┌──────────────────┐
+│ total_revenue│    │  │ integrations │   │integration_      │
+└──────────────┘    │  ├──────────────┤   │  mappings         │
+                    │  │ id (PK)      │◄──┤──────────────────┤
+         ┌──────────┘  │ tenant_id    │   │ id (PK)          │
+         │             │ type         │   │ integration_id   │
+    orders.session_id  │ credentials{}│   │ local_table      │
+                       │ settings{}   │   │ local_id         │
+                       └──────────────┘   │ external_id      │
+                                          └──────────────────┘
 ```
 
 ### Row-Level Security Policies
@@ -654,7 +835,115 @@ CREATE POLICY "customers_tenant" ON customers
 
 ---
 
-## 5. API Design
+## 6. POS Features
+
+### Core POS Capabilities
+
+These features distinguish ScanOrder as a real POS app, not just an order form:
+
+#### 6.1 Shift/Session Management
+
+Every POS session has a lifecycle:
+
+```
+OPEN SESSION → SELL → CLOSE SESSION → RECONCILE
+     │                      │              │
+     ├─ Set cash float      ├─ Count cash  ├─ Compare expected vs. actual
+     ├─ Select event        ├─ Print Z-report ├─ Flag discrepancies
+     └─ Confirm device      └─ Submit      └─ Lock session
+```
+
+- **Open shift**: Sales rep opens a session, enters starting cash float, selects event
+- **During shift**: All orders tied to the session. Cash movements tracked.
+- **Close shift**: Count physical cash, app calculates expected cash, shows difference
+- **Z-report**: End-of-day summary (total orders, revenue by payment method, cash over/short)
+
+#### 6.2 Cash Management
+
+```
+┌─────────────────────────────────────┐
+│  CASH DRAWER                         │
+│                                     │
+│  Opening float:      €150.00        │
+│  + Cash sales:       +€345.00       │
+│  - Cash refunds:     -€24.50        │
+│  + Manual cash in:   +€0.00         │
+│  - Safe drops:       -€200.00       │
+│  ────────────────────────────       │
+│  Expected in drawer: €270.50        │
+│  Counted:            €268.00        │
+│  Difference:         -€2.50         │
+│                                     │
+│  [ACCEPT & CLOSE SHIFT]             │
+└─────────────────────────────────────┘
+```
+
+#### 6.3 Quick Sale (Walk-in Customer)
+
+Not every transaction needs a registered customer:
+- **"Quick Sale" button** starts an order without customer selection
+- Order gets tagged as `customer_id: null` with optional walk-in name
+- Later, admin can assign a customer to the order from the web dashboard
+
+#### 6.4 Returns & Refunds
+
+```
+FIND ORIGINAL ORDER → SELECT ITEMS TO RETURN → PROCESS REFUND
+                          │                        │
+                          ├─ Full/partial return    ├─ Cash back
+                          ├─ Reason code            ├─ Credit note
+                          └─ Stock adjustment       └─ Reverse to payment method
+```
+
+- Returns create a negative order linked to the original via `refund_of_order_id`
+- Stock auto-adjusted on return confirmation
+- Cash movements tracked for cash refunds
+
+#### 6.5 EU VAT Handling (B2B Critical)
+
+| Scenario | VAT Treatment | Example |
+|----------|--------------|---------|
+| **Domestic B2C** | Standard rate (21% NL) | Selling to Dutch consumer at Maison&Objet |
+| **Domestic B2B** | Standard rate | Selling to De Bijenkorf (Dutch company) |
+| **EU B2B (valid VAT ID)** | Reverse charge (0%) | Selling to German retailer with DE VAT number |
+| **EU B2C** | Destination country rate | Selling to French consumer → 20% FR VAT |
+| **Non-EU** | Zero-rated export | Selling to US retailer |
+
+The app validates EU VAT numbers via the VIES API (EU Commission service) and automatically applies the correct tax treatment. This is stored per-customer in `tax_treatment` and per-order-line in `tax_rate_id`.
+
+#### 6.6 Receipt Generation
+
+- **Digital receipt**: Email to customer (PDF or link)
+- **Thermal printer**: Bluetooth receipt printer support (Star Micronics, Epson TM series via Expo Print)
+- **Receipt includes**: Order number, items, tax breakdown, payment method, event name, company details
+
+### PoC vs Full POS Feature Matrix
+
+| Feature | PoC | MVP | v1.0 |
+|---------|:---:|:---:|:----:|
+| Barcode scanning | Yes | Yes | Yes |
+| Cart & checkout | Yes | Yes | Yes |
+| Customer selection | Yes | Yes | Yes |
+| Quick sale (no customer) | Yes | Yes | Yes |
+| Offline ordering | Yes | Yes | Yes |
+| Order sync | Yes | Yes | Yes |
+| Web dashboard (orders) | Yes | Yes | Yes |
+| Shift/session management | — | Yes | Yes |
+| Cash management | — | Yes | Yes |
+| Returns/refunds | — | Yes | Yes |
+| EU VAT handling | — | Yes | Yes |
+| Receipt printing | — | Yes | Yes |
+| Price lists / volume discounts | — | — | Yes |
+| WooCommerce integration | — | Yes | Yes |
+| Exact Online integration | — | — | Yes |
+| Payment processing (Mollie) | — | — | Yes |
+| Analytics/reporting | — | Basic | Full |
+| Multi-tenant billing | — | — | Yes |
+| Android support | — | Yes | Yes |
+
+---
+
+## 7. API Design
 
 ### API Architecture
 
@@ -761,7 +1050,7 @@ POST   /api/sync/upload                          # PowerSync upload endpoint
 
 ---
 
-## 6. Offline-First Sync Architecture
+## 8. Offline-First Sync Architecture
 
 ### Sync Flow
 
@@ -855,7 +1144,7 @@ Before a trade show, the app prompts the user to ensure data is current:
 
 ---
 
-## 7. Mobile App — Screens & Flows
+## 9. Mobile App — Screens & Flows
 
 ### Screen Map
 
@@ -916,7 +1205,7 @@ Tab Navigator
 
 ---
 
-## 8. Web Admin Dashboard
+## 10. Web Admin Dashboard
 
 ### Dashboard Pages
 
@@ -933,7 +1222,7 @@ Tab Navigator
 
 ---
 
-## 9. Barcode Scanning
+## 11. Barcode Scanning
 
 ### Implementation
 
@@ -982,52 +1271,65 @@ export function BarcodeScanner({ onScan }: { onScan: (barcode: string) => void }
 
 ### Bluetooth Hardware Scanner Support
 
-Bluetooth HID scanners send text as keyboard input. No special SDK needed:
+Bluetooth HID barcode scanners emulate keyboard input — they send characters rapidly, terminated by Enter/newline. The approach: a **hidden TextInput** that captures this input without showing a keyboard.
 
 ```typescript
 // apps/mobile/hooks/useHardwareScanner.ts
-import { useEffect, useRef } from 'react';
-import { Keyboard } from 'react-native';
+import { useRef, useCallback } from 'react';
+import { TextInput, StyleSheet } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
-export function useHardwareScanner(onScan: (barcode: string) => void) {
-  const buffer = useRef('');
-  const timeout = useRef<NodeJS.Timeout>();
-
-  useEffect(() => {
-    // Hardware scanners send characters rapidly followed by Enter
-    const listener = Keyboard.addListener('keyboardDidHide', () => {
-      // Ignore — only care about hardware scanner input
-    });
-
-    // Listen for raw text input (HID keyboard emulation)
-    const handleKeyPress = (key: string) => {
-      clearTimeout(timeout.current);
-
-      if (key === 'Enter' || key === '\n') {
-        if (buffer.current.length >= 8) { // Min barcode length
-          onScan(buffer.current);
-        }
-        buffer.current = '';
-      } else {
-        buffer.current += key;
-        // Auto-clear buffer after 100ms of no input (scan complete)
-        timeout.current = setTimeout(() => {
-          if (buffer.current.length >= 8) {
-            onScan(buffer.current);
-          }
-          buffer.current = '';
-        }, 100);
-      }
-    };
-
-    return () => listener.remove();
-  }, [onScan]);
+interface HardwareScannerProps {
+  onScan: (barcode: string) => void;
+  minLength?: number;  // minimum barcode length to accept
 }
+
+// Hidden TextInput component — mount this in your scan screen
+export function HardwareScannerInput({ onScan, minLength = 8 }: HardwareScannerProps) {
+  const inputRef = useRef<TextInput>(null);
+  const lastScanTime = useRef(0);
+
+  const handleSubmit = useCallback(({ nativeEvent: { text } }: { nativeEvent: { text: string } }) => {
+    const trimmed = text.trim();
+    const now = Date.now();
+
+    // Debounce: ignore if same scan within 500ms
+    if (trimmed.length >= minLength && now - lastScanTime.current > 500) {
+      lastScanTime.current = now;
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      onScan(trimmed);
+    }
+
+    // Clear input for next scan
+    inputRef.current?.clear();
+  }, [onScan, minLength]);
+
+  return (
+    <TextInput
+      ref={inputRef}
+      style={styles.hiddenInput}
+      autoFocus
+      showSoftInputOnFocus={false}  // Don't show on-screen keyboard
+      onSubmitEditing={handleSubmit}
+      blurOnSubmit={false}           // Keep focus for continuous scanning
+      caretHidden
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  hiddenInput: {
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    opacity: 0,
+  },
+});
 ```
 
 ---
 
-## 10. Payment Processing
+## 12. Payment Processing
 
 ### Mollie Connect Architecture (Primary — EU/NL)
 
@@ -1073,7 +1375,7 @@ This means payment processing is secondary to order capture. The MVP can launch 
 
 ---
 
-## 11. Integration Architecture
+## 13. Integration Architecture
 
 ### WooCommerce Integration
 
@@ -1148,7 +1450,7 @@ class ExactOnlineAdapter implements IntegrationAdapter { ... }
 
 ---
 
-## 12. Security Architecture
+## 14. Security Architecture
 
 ### Authentication & Authorization
 
@@ -1213,9 +1515,78 @@ class ExactOnlineAdapter implements IntegrationAdapter { ... }
 
 ---
 
-## 13. UI Mock Designs
+## 15. Scalability Strategy
 
-### 13.1 Mobile — Scan & Order (Tablet, Landscape)
+### Current Limits & Growth Triggers
+
+| Service | Current Tier | Limit | Trigger to Upgrade | Action |
+|---------|-------------|-------|-------------------|--------|
+| **PowerSync** | Pro ($49/mo) | 1K concurrent connections | ~200 merchants × 3 devices | Self-host PowerSync (open-source, Docker) |
+| **Supabase** | Pro ($25/mo) | 50K MAU, 8GB DB, 250GB bandwidth | ~300 merchants | Upgrade to Team ($599/mo) or self-host |
+| **Vercel** | Pro ($20/mo) | Per-seat pricing, bandwidth limits | Team growth + traffic | Migrate to Cloudflare Pages via OpenNext |
+| **Cloudflare Workers** | Free/Pro | 100K req/day (free), unlimited (paid $5/mo) | Sustained webhook traffic | Already on $5/mo Pro |
+
+### PowerSync Scaling Path
+
+PowerSync is the most likely bottleneck. Scaling plan:
+
+```
+0-200 merchants:  PowerSync Cloud Pro ($49/mo, 1K connections)
+                      ↓ growing pains
+200-1K merchants: Self-host PowerSync (Docker, your own infra)
+                  - PowerSync is open-source (self-host option)
+                  - Run on Hetzner/Fly.io for €20-50/mo
+                  - Full control over connection limits
+                      ↓
+1K+ merchants:    Multiple PowerSync instances behind load balancer
+                  - Shard by tenant_id range
+                  - Each instance reads same Postgres WAL
+```
+
+### Database Scaling
+
+**Single Supabase instance works longer than you'd think** because:
+- RLS handles tenant isolation at the query level
+- PowerSync reads WAL (not queries), so sync traffic doesn't hit your connection pool
+- Most queries are simple (read products, write orders) — no complex joins
+
+**When to shard:**
+- DB size > 50GB (unlikely before 1K+ merchants)
+- Connection count > 500 sustained (Workers use Hyperdrive pooling, so this is high)
+- Replication lag affects sync latency
+
+**Sharding strategy when needed:**
+1. Move to Supabase per-tenant projects (Supabase supports this, complex to manage)
+2. OR: Use Citus extension for horizontal sharding on `tenant_id` (Supabase doesn't support this yet)
+3. OR: Self-host Postgres on Neon (branching + auto-scaling)
+
+### Vercel → Cloudflare Migration Path
+
+A-Journal already uses Cloudflare. Long-term, hosting the Next.js dashboard on Cloudflare Pages via OpenNext saves money and consolidates infrastructure:
+
+| Phase | Dashboard Hosting | Cost |
+|-------|------------------|------|
+| PoC/MVP | Vercel Pro | $20/mo |
+| Scale (500+ users) | Cloudflare Pages (OpenNext) | ~$5/mo |
+
+OpenNext compiles Next.js for non-Vercel platforms. The Cloudflare adapter is production-ready as of 2025.
+
+### Database Migration with PowerSync
+
+Schema changes require coordination because PowerSync reads the WAL:
+
+1. **Additive changes** (new columns, tables): No coordination needed. PowerSync ignores unknown columns.
+2. **Column renames/deletes**: Update PowerSync sync rules FIRST, then migrate DB.
+3. **Type changes**: Deploy new PowerSync sync rules + new client schema version simultaneously.
+4. **Rollback**: Always keep one previous sync rule version available.
+
+Rule: **Never deploy a breaking schema change without updating the PowerSync sync rules and client schema in the same release window.**
+
+---
+
+## 16. UI Mock Designs
+
+### 16.1 Mobile — Scan & Order (Tablet, Landscape)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -1260,7 +1631,7 @@ class ExactOnlineAdapter implements IntegrationAdapter { ... }
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 13.2 Mobile — Scan & Order (Phone, Portrait)
+### 16.2 Mobile — Scan & Order (Phone, Portrait)
 
 ```
 ┌───────────────────────────┐
@@ -1297,7 +1668,7 @@ class ExactOnlineAdapter implements IntegrationAdapter { ... }
 └───────────────────────────┘
 ```
 
-### 13.3 Mobile — Customer Selection
+### 16.3 Mobile — Customer Selection
 
 ```
 ┌───────────────────────────────────────────────┐
@@ -1337,7 +1708,7 @@ class ExactOnlineAdapter implements IntegrationAdapter { ... }
 └───────────────────────────────────────────────┘
 ```
 
-### 13.4 Mobile — Order Confirmation
+### 16.4 Mobile — Order Confirmation
 
 ```
 ┌───────────────────────────────────────────────┐
@@ -1377,7 +1748,7 @@ class ExactOnlineAdapter implements IntegrationAdapter { ... }
 └───────────────────────────────────────────────┘
 ```
 
-### 13.5 Mobile — Sync Status Screen
+### 16.5 Mobile — Sync Status Screen
 
 ```
 ┌───────────────────────────────────────────────┐
@@ -1424,7 +1795,7 @@ class ExactOnlineAdapter implements IntegrationAdapter { ... }
 └───────────────────────────────────────────────┘
 ```
 
-### 13.6 Web Dashboard — Home
+### 16.6 Web Dashboard — Home
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
@@ -1464,7 +1835,7 @@ class ExactOnlineAdapter implements IntegrationAdapter { ... }
 └──────────┴───────────────────────────────────────────────────────────────┘
 ```
 
-### 13.7 Web Dashboard — Integration Setup (WooCommerce)
+### 16.7 Web Dashboard — Integration Setup (WooCommerce)
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
@@ -1520,7 +1891,7 @@ class ExactOnlineAdapter implements IntegrationAdapter { ... }
 
 ---
 
-## 14. POS Reference Analysis
+## 17. POS Reference Analysis
 
 ### Lessons from Existing POS Systems
 
@@ -1543,7 +1914,7 @@ class ExactOnlineAdapter implements IntegrationAdapter { ... }
 
 ---
 
-## 15. CI/CD & Deployment
+## 18. CI/CD & Deployment
 
 ### Pipeline Architecture
 
@@ -1636,7 +2007,7 @@ jobs:
 
 ---
 
-## 16. Cost Breakdown
+## 19. Cost Breakdown
 
 ### Monthly Infrastructure Costs
 
@@ -1671,53 +2042,88 @@ Infrastructure costs remain low because:
 
 ---
 
-## 17. Development Roadmap
+## 20. Development Roadmap
 
-### Phase 1: Foundation (Weeks 1-4)
+### Phase 0: PoC — Prove the Loop (Weeks 1-3)
 
-| Task | Deliverable |
-|------|------------|
-| Monorepo setup | Turborepo + pnpm + shared packages |
-| Database schema | Drizzle schema + Supabase migrations + RLS |
-| Auth | Supabase Auth with tenant-aware JWTs |
-| PowerSync setup | Sync streams, local schema, upload handler |
-| Basic mobile shell | Expo app with tab navigation, auth flow |
-| Basic web shell | Next.js dashboard with auth, sidebar |
+**Goal**: Scan → cart → checkout → order appears on web dashboard. iPad only.
 
-### Phase 2: Core Features (Weeks 5-10)
+| Task | Deliverable | Priority |
+|------|------------|:--------:|
+| Monorepo setup | Turborepo + pnpm + shared types package | P0 |
+| Database schema (core only) | tenants, users, products, customers, orders, order_lines | P0 |
+| Supabase setup | Project, Auth, RLS policies, seed data | P0 |
+| PowerSync setup | Sync streams for products + customers DOWN, orders UP | P0 |
+| Expo app shell (iPad) | Tab navigation, auth flow, iPad landscape layout | P0 |
+| Barcode scanner | Camera scanning + BT hardware scanner | P0 |
+| Cart & checkout | Scan → add to cart → adjust quantities → submit order | P0 |
+| Customer selection | Pick existing customer or "quick sale" | P0 |
+| Offline ordering | Orders saved to local SQLite, queued for sync | P0 |
+| Web dashboard (minimal) | Next.js: login + order list + order detail page | P0 |
+| Cloudflare Worker (stub) | Upload handler for PowerSync order uploads | P0 |
 
-| Task | Deliverable |
-|------|------------|
-| Barcode scanner | Camera + BT scanner integration |
-| Cart & ordering | Scan → cart → order → local DB |
-| Product catalog | Browse, search, filter (offline-capable) |
-| Customer management | Select, create, assign price groups |
-| Offline mode | Full offline ordering + sync on reconnect |
-| Order management (web) | List, detail, status updates |
+**Exit criteria**: Demo to stakeholders — scan real A-Journal products, create an order offline, show it syncing to the web dashboard.
 
-### Phase 3: Integrations (Weeks 11-14)
+### Phase 1: Alpha — Real POS Features (Weeks 4-8)
 
-| Task | Deliverable |
-|------|------------|
-| WooCommerce sync | Product pull, order push, webhooks |
-| Exact Online | OAuth setup, order + invoice push |
-| PDF generation | Order confirmation PDFs |
-| Event management | Create events, assign orders to events |
+| Task | Deliverable | Priority |
+|------|------------|:--------:|
+| iPhone layout | Stacked layout (camera top, cart bottom sheet) | P1 |
+| Product catalog screen | Browse, search, filter by category (offline) | P1 |
+| Shift/session management | Open/close shift, cash float, basic reconciliation | P1 |
+| Event management | Create events, assign orders to events | P1 |
+| Order status flow | draft → pending → confirmed → processing | P1 |
+| Web: product management | CRUD products, bulk CSV import, image upload (R2) | P1 |
+| Web: customer management | CRUD customers, customer groups | P1 |
+| Pre-show sync checklist | Ensure data is fresh before going offline | P1 |
+| Basic error handling | Sync failures, network state UI, retry logic | P1 |
+| TestFlight distribution | Internal testing via TestFlight | P1 |
 
-### Phase 4: Polish & Launch (Weeks 15-18)
+### Phase 2: MVP — Integrations & Polish (Weeks 9-14)
 
-| Task | Deliverable |
-|------|------------|
-| Analytics dashboard | KPIs, charts, per-event reporting |
-| Billing | Subscription management (Mollie) |
-| Onboarding flow | First-run setup wizard |
-| Testing | E2E, performance, offline resilience |
-| App Store submission | iOS + Android release |
-| Documentation | User guide, API docs |
+| Task | Deliverable | Priority |
+|------|------------|:--------:|
+| WooCommerce integration | Product pull, order push, webhooks | P2 |
+| Android builds | Expo builds for Android tablet + phone | P2 |
+| Returns/refunds | Return flow with stock adjustment | P2 |
+| Cash management | Full cash tracking, safe drops, Z-report | P2 |
+| EU VAT handling | Tax rates, reverse charge, VIES validation | P2 |
+| Receipt generation | PDF receipts, email to customer | P2 |
+| Web: analytics (basic) | Orders/revenue per event, top products | P2 |
+| Web: integration setup UI | WooCommerce connection wizard | P2 |
+| CI/CD pipeline | GitHub Actions: lint, typecheck, test, deploy | P2 |
+| Sentry monitoring | Error tracking across all apps | P2 |
 
-### Total Timeline: ~18 weeks (4.5 months) for MVP
+### Phase 3: v1.0 — Commercial Ready (Weeks 15-20)
 
-This assumes 2 developers working full-time. Add 2-4 weeks buffer for unknowns.
+| Task | Deliverable | Priority |
+|------|------------|:--------:|
+| Exact Online integration | OAuth, order push, invoice creation | P3 |
+| Mollie Connect | Payment processing, split payments, SaaS fees | P3 |
+| Price lists / volume discounts | B2B pricing engine | P3 |
+| Multi-tenant billing | Subscription management via Mollie | P3 |
+| Onboarding wizard | First-run setup, demo data, guided tour | P3 |
+| App Store submission | iOS App Store + Google Play | P3 |
+| Performance optimization | Large catalog perf, sync speed, image caching | P3 |
+| E2E testing | Detox (mobile) + Playwright (web) | P3 |
+| User documentation | Setup guide, API docs, integration guides | P3 |
+
+### Timeline Summary
+
+```
+Week  1──3    4──────8    9──────14    15──────20
+      PoC      Alpha       MVP          v1.0
+      │        │           │            │
+      iPad     +iPhone     +Android     +Payments
+      Scan     +Sessions   +WooCommerce +Exact Online
+      Cart     +Events     +Returns     +Billing
+      Orders   +TestFlight +VAT         +App Store
+      Web(min) +Products   +Receipts    +Onboarding
+```
+
+### Total: ~20 weeks with PoC at week 3
+
+PoC is the most important milestone. If the core loop doesn't feel right, stop and adjust before investing in Phase 1+. Assumes 2 developers, add 2-4 weeks buffer.
 
 ---
 
@@ -1738,4 +2144,4 @@ This assumes 2 developers working full-time. Add 2-4 weeks buffer for unknowns.
 
 ---
 
-*This blueprint is designed to be a living document. Update it as technical decisions evolve during development.*
+*This blueprint is a living document. Update it as technical decisions evolve during development. The PoC (Phase 0) is deliberately minimal — resist the urge to expand its scope.*
