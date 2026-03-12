@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "ScanOrder",
+    "slug": "scanorder",
+    "version": "0.0.1",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "scheme": "scanorder",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.scanorder.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "ScanOrder needs camera access to scan barcodes",
+        "UIRequiresFullScreen": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.scanorder.app"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "ScanOrder needs camera access to scan barcodes"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

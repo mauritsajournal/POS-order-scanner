@@ -1,0 +1,13 @@
+{
+  "name": "scanorder-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // Bindings configured after creating resources in Cloudflare dashboard:
+  // "r2_buckets": [{ "binding": "IMAGES", "bucket_name": "scanorder-images" }],
+  // "kv_namespaces": [{ "binding": "CACHE", "id": "..." }],
+  // "hyperdrive": [{ "binding": "DB", "id": "..." }],
+  "vars": {
+    "ENVIRONMENT": "development"
+  }
+}
