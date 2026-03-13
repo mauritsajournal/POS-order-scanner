@@ -1303,7 +1303,8 @@ Web dashboard page for Exact Online. "Connect to Exact Online" OAuth button. Div
 
 ---
 
-### [INT-009] EU VIES VAT number validation
+### [INT-009] EU VIES VAT number validation — `DONE`
+> DONE 2026-03-13 — VIES REST API validation, 24h KV caching, all EU country codes, route at /api/vat/validate
 **Priority:** P2 | **Effort:** S | **Depends on:** API-001
 
 Integrate with EU VIES API to validate VAT numbers. Called when creating/editing customers with EU VAT numbers. Returns validity status and registered company name. Cache results to avoid repeated lookups.
