@@ -963,7 +963,8 @@ Dashboard home with KPI cards: orders today, revenue this show, customers this s
 
 ---
 
-### [WEB-007] Product management page
+### [WEB-007] Product management page — `DONE`
+> DONE 2026-03-13 — Products table with image/SKU/price/stock/category/status/variants, stock badges, filters
 **Priority:** P1 | **Effort:** L | **Depends on:** WEB-003, INFRA-005
 
 Product CRUD: list with search/filter, create/edit forms, image upload (to R2), variant management, bulk CSV import. Table columns: image, name, SKU, barcode, price, stock, category, status.
@@ -979,7 +980,8 @@ Product CRUD: list with search/filter, create/edit forms, image upload (to R2), 
 
 ---
 
-### [WEB-008] Customer management page
+### [WEB-008] Customer management page — `DONE`
+> DONE 2026-03-13 — Customer table with company/contact/email/phone/location/price group/order count
 **Priority:** P1 | **Effort:** M | **Depends on:** WEB-003, INFRA-005
 
 Customer CRUD: list with search, create/edit forms, customer groups/price lists assignment. Table columns: company, contact, email, phone, price group, order count.
@@ -995,7 +997,8 @@ Customer CRUD: list with search, create/edit forms, customer groups/price lists 
 
 ---
 
-### [WEB-009] Event management page
+### [WEB-009] Event management page — `DONE`
+> DONE 2026-03-13 — Event cards with status/location/dates/order stats, responsive grid
 **Priority:** P1 | **Effort:** M | **Depends on:** WEB-003, INFRA-005
 
 Trade show event CRUD. Fields: name, location, start/end dates, status (upcoming/active/completed). Event detail page shows orders for that event, revenue summary, participating sales reps. Assign team members to events.
