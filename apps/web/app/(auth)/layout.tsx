@@ -1,5 +1,5 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, type JSX } from 'react';
 
-export default function AuthLayout({ children }: { children: ReactNode }): React.JSX.Element {
+export default function AuthLayout({ children }: { children: ReactNode }): JSX.Element {
   return <>{children}</>;
 }
