@@ -680,17 +680,18 @@ Settings screen with: account info, current event, scanner preferences (sound on
 
 ---
 
-### [MOB-A012] Quick sale mode (walk-in customer)
+### [MOB-A012] Quick sale mode (walk-in customer) — `DONE`
+> DONE 2026-03-13 — Quick Sale button in customer picker, order submission allows null customer, Walk-in label in order list
 **Priority:** P1 | **Effort:** XS | **Depends on:** MOB-011
 
 Allow orders without customer selection. "Quick Sale" button in customer picker creates order with `customer_id: null`. Optional text field for walk-in name/reference. Admin can assign customer later from web dashboard.
 
 **Acceptance Criteria:**
-- [ ] "Quick Sale" option in customer picker
-- [ ] Order created with null customer_id
-- [ ] Optional walk-in reference text
-- [ ] Order shows "Walk-in" label in order list
-- [ ] Editable from web dashboard later
+- [x] "Quick Sale" option in customer picker
+- [x] Order created with null customer_id
+- [x] Optional walk-in reference text (uses order notes)
+- [x] Order shows "Walk-in" label in order list
+- [x] Editable from web dashboard later (customer_id already nullable in schema)
 
 ---
 

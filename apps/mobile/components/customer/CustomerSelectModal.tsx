@@ -14,6 +14,7 @@ interface CustomerSelectModalProps {
   visible: boolean;
   onSelect: (customer: Customer) => void;
   onClose: () => void;
+  onQuickSale?: () => void;
   customers: Customer[];
 }
 
@@ -21,6 +22,7 @@ export function CustomerSelectModal({
   visible,
   onSelect,
   onClose,
+  onQuickSale,
   customers,
 }: CustomerSelectModalProps) {
   const [search, setSearch] = useState('');
@@ -54,6 +56,13 @@ export function CustomerSelectModal({
             <Text style={styles.closeButton}>Cancel</Text>
           </TouchableOpacity>
         </View>
+
+        {onQuickSale && (
+          <TouchableOpacity style={styles.quickSaleButton} onPress={onQuickSale}>
+            <Text style={styles.quickSaleText}>Quick Sale (Walk-in)</Text>
+            <Text style={styles.quickSaleHint}>No customer — assign later from dashboard</Text>
+          </TouchableOpacity>
+        )}
 
         <TextInput
           value={search}
@@ -105,6 +114,26 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 18, fontWeight: '700', color: '#111827' },
   closeButton: { fontSize: 16, color: '#2563EB', fontWeight: '600' },
+  quickSaleButton: {
+    marginHorizontal: 12,
+    marginTop: 12,
+    padding: 14,
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  quickSaleText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#16A34A',
+  },
+  quickSaleHint: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
   searchInput: {
     margin: 12,
     backgroundColor: '#F3F4F6',

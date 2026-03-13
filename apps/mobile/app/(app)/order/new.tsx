@@ -20,10 +20,6 @@ export default function NewOrderScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit() {
-    if (!customer) {
-      Alert.alert('No customer', 'Please select a customer before submitting.');
-      return;
-    }
     if (lines.length === 0) {
       Alert.alert('Empty cart', 'Add at least one product to submit an order.');
       return;
@@ -43,7 +39,7 @@ export default function NewOrderScreen() {
     const order = {
       id: orderId,
       tenant_id: tenantId,
-      customer_id: customer.id,
+      customer_id: customer?.id ?? null,
       status: 'draft' as const,
       subtotal: subtotal(),
       tax_amount: taxAmount(),
@@ -93,14 +89,26 @@ export default function NewOrderScreen() {
         <View style={{ width: 60 }} />
       </View>
 
-      {customer && (
-        <View style={styles.customerCard}>
-          <Text style={styles.customerName}>{customer.company_name}</Text>
-          {customer.contact_name && (
-            <Text style={styles.customerContact}>{customer.contact_name}</Text>
-          )}
-        </View>
-      )}
+      <View style={styles.customerCard}>
+        {customer ? (
+          <>
+            <Text style={styles.customerName}>{customer.company_name}</Text>
+            {customer.contact_name && (
+              <Text style={styles.customerContact}>{customer.contact_name}</Text>
+            )}
+          </>
+        ) : (
+          <>
+            <Text style={styles.customerName}>Walk-in Sale</Text>
+            <Text style={styles.customerContact}>No customer assigned</Text>
+          </>
+        )}
+        {notes && (
+          <Text style={[styles.customerContact, { marginTop: 4, fontStyle: 'italic' }]}>
+            {notes}
+          </Text>
+        )}
+      </View>
 
       <FlatList
         data={lines}

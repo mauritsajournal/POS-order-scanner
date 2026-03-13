@@ -66,9 +66,21 @@ export default function OrdersScreen() {
                   </Text>
                 </View>
               </View>
-              <Text style={{ color: '#6B7280', marginTop: 4, fontSize: 14 }}>
-                {formatPrice(item.total)}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 8 }}>
+                <Text style={{ color: '#6B7280', fontSize: 14 }}>
+                  {formatPrice(item.total)}
+                </Text>
+                {!item.customer_id && (
+                  <View style={{
+                    backgroundColor: '#FEF3C7', paddingHorizontal: 6, paddingVertical: 1,
+                    borderRadius: 4,
+                  }}>
+                    <Text style={{ color: '#92400E', fontSize: 11, fontWeight: '600' }}>
+                      Walk-in
+                    </Text>
+                  </View>
+                )}
+              </View>
             </TouchableOpacity>
           );
         }}
