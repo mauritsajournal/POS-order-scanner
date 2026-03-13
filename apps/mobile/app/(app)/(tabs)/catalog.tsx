@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
+import { router } from 'expo-router';
 import { useCart } from '@/store/cart';
 import { formatPrice } from '@scanorder/shared';
 import type { Product } from '@scanorder/shared';
@@ -88,7 +89,7 @@ export default function CatalogScreen() {
       <TouchableOpacity
         style={[styles.gridTile, { width: tileWidth }]}
         activeOpacity={0.7}
-        // TODO: onPress → navigate to product detail screen
+        onPress={() => router.push(`/product/${item.id}`)}
       >
         {item.image_url ? (
           <Image
@@ -129,7 +130,7 @@ export default function CatalogScreen() {
 
   const renderListItem = useCallback(
     ({ item }: { item: Product }) => (
-      <TouchableOpacity style={styles.listRow} activeOpacity={0.7}>
+      <TouchableOpacity style={styles.listRow} activeOpacity={0.7} onPress={() => router.push(`/product/${item.id}`)}>
         {item.image_url ? (
           <Image
             source={{ uri: item.image_url }}
