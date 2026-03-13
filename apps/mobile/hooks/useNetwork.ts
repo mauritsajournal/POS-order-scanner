@@ -1,23 +1,31 @@
 import { useState, useEffect } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
+import Constants from 'expo-constants';
 
-// Simple network detection hook.
-// In production, use @react-native-community/netinfo for richer data.
+// API base URL from Expo config, with fallback for dev
+const API_BASE_URL =
+  Constants.expoConfig?.extra?.apiUrl ?? process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8787';
+
+/**
+ * Simple network detection hook.
+ * Pings own API /health endpoint instead of third-party services.
+ * In production, use @react-native-community/netinfo for richer data.
+ */
 export function useNetwork() {
   const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
-    // Check connectivity by attempting a lightweight fetch
+    // Check connectivity by hitting our own API health endpoint
     async function checkConnection() {
       try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 3000);
-        await fetch('https://www.google.com/generate_204', {
-          method: 'HEAD',
+        const response = await fetch(`${API_BASE_URL}/health`, {
+          method: 'GET',
           signal: controller.signal,
         });
         clearTimeout(timeout);
-        setIsOnline(true);
+        setIsOnline(response.ok);
       } catch {
         setIsOnline(false);
       }
