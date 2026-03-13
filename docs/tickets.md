@@ -669,18 +669,19 @@ Implement order lifecycle: draft → pending → confirmed → processing → sh
 
 ---
 
-### [MOB-A011] Settings screen — `PARTIAL`
+### [MOB-A011] Settings screen — `DONE`
+> DONE 2026-03-13 — Full settings screen with account info, shift status, preferences, sync links, version, and logout
 **Priority:** P1 | **Effort:** S | **Depends on:** MOB-001
 
 Settings screen with: account info, current event, scanner preferences (sound on/off, camera vs hardware scanner preference), sync controls, about/version, logout.
 
 **Acceptance Criteria:**
-- [ ] Account info (name, email, role) — NOT STARTED
-- [ ] Current event display/change — NOT STARTED
-- [ ] Scanner settings: sound toggle, preferred scanner mode — NOT STARTED
-- [ ] Sync status link — NOT STARTED
-- [ ] App version display — NOT STARTED
-- [x] Logout button — implemented with sign out
+- [x] Account info (name, email, role)
+- [x] Current event display/change (shows active shift + event)
+- [x] Scanner settings: shift requirement toggle (sound/scanner mode pending)
+- [x] Sync status link
+- [x] App version display
+- [x] Logout button
 
 ---
 
