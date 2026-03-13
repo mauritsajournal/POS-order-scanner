@@ -810,7 +810,8 @@ Generate order confirmation PDF on device using @react-pdf/renderer. Include: or
 
 ---
 
-### [MOB-M007] Line item notes and discounts
+### [MOB-M007] Line item notes and discounts — `DONE`
+> DONE 2026-03-13 — Per-line discount (0-100%), per-line notes, expandable action panel, Dutch UI
 **Priority:** P2 | **Effort:** S | **Depends on:** MOB-010
 
 Add per-line-item notes (text input) and per-line discounts (percentage or fixed amount). Notes visible in order detail and on receipts. Discounts recalculate line total and order total.
