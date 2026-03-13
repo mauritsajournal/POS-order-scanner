@@ -543,19 +543,20 @@ Browse products by category with grid/list toggle. Product tiles show image, nam
 
 ---
 
-### [MOB-A003] Product detail screen
+### [MOB-A003] Product detail screen — `DONE`
+> DONE 2026-03-13 — Full product detail with image, SKU, barcode, description, price+BTW, stock indicator, variant chips, quantity control, add-to-cart
 **Priority:** P1 | **Effort:** S | **Depends on:** MOB-A002
 
 Full product detail view: image, name, SKU, barcode, description, price, stock, variants. If product has variants: show variant selector (size, color grid). "Add to Cart" button with quantity selector.
 
 **Acceptance Criteria:**
-- [ ] Product image (full width)
-- [ ] Name, SKU, barcode, description
-- [ ] Price display (formatted from cents)
-- [ ] Stock quantity with color indicator (green/yellow/red)
-- [ ] Variant selector if applicable
-- [ ] "Add to Cart" with quantity input
-- [ ] Works offline
+- [x] Product image (full width)
+- [x] Name, SKU, barcode, description
+- [x] Price display (formatted from cents)
+- [x] Stock quantity with color indicator (green/yellow/red)
+- [x] Variant selector if applicable
+- [x] "Add to Cart" with quantity input
+- [ ] Works offline — BLOCKED: PowerSync not yet connected
 
 ---
 
