@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { authMiddleware, type AuthUser } from './middleware/auth';
+import { rateLimitMiddleware } from './middleware/rate-limit';
 import { syncUpload } from './routes/sync/upload';
 import { API } from '@scanorder/shared';
 
@@ -47,6 +48,9 @@ app.get('/health', (c) => c.json({ status: 'ok', environment: c.env.ENVIRONMENT 
 
 // Protected routes — require valid Supabase JWT
 app.use('/api/*', authMiddleware);
+
+// Rate limiting on sync routes (runs after auth, uses tenant context)
+app.use('/api/sync/*', rateLimitMiddleware);
 
 // PowerSync upload handler
 app.post('/api/sync/upload', syncUpload);
