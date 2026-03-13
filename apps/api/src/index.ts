@@ -50,8 +50,9 @@ app.get('/health', (c) => c.json({ status: 'ok', environment: c.env.ENVIRONMENT 
 // Protected routes — require valid Supabase JWT
 app.use('/api/*', authMiddleware);
 
-// Rate limiting on sync routes (runs after auth, uses tenant context)
-app.use('/api/sync/*', rateLimitMiddleware);
+// Rate limiting on all API routes (runs after auth, uses tenant context)
+// Exempt paths (e.g. PowerSync sync) are handled inside the middleware
+app.use('/api/*', rateLimitMiddleware);
 
 // PowerSync upload handler
 app.post('/api/sync/upload', syncUpload);

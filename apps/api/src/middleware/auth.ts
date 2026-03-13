@@ -9,6 +9,8 @@ export interface AuthUser {
   tenantId: string;
   role: string;
   email: string;
+  /** Tenant plan tier for rate limiting (free/starter/professional/enterprise) */
+  plan?: string;
 }
 
 /**
@@ -54,6 +56,7 @@ export const authMiddleware: MiddlewareHandler<{
       tenantId,
       role,
       email: payload.email ?? '',
+      plan: (appMetadata.plan as string) ?? undefined,
     };
 
     c.set('user', user);

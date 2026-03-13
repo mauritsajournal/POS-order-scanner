@@ -25,10 +25,19 @@ export const SCANNER = {
 export const API = {
   /** Default CORS origins for development */
   DEV_ORIGINS: ['http://localhost:3000', 'http://localhost:8081'] as readonly string[],
-  /** Rate limit: max requests per minute per tenant */
+  /** Rate limit: max requests per minute per tenant (default / fallback) */
   RATE_LIMIT_PER_MINUTE: 100,
+  /** Rate limits by plan tier — requests per minute per tenant */
+  RATE_LIMITS_BY_PLAN: {
+    free: 60,
+    starter: 120,
+    professional: 300,
+    enterprise: 1000,
+  } as Record<string, number>,
   /** Max operations per PowerSync upload transaction */
   MAX_OPS_PER_TRANSACTION: 100,
+  /** Path prefixes exempted from rate limiting (PowerSync sync traffic) */
+  RATE_LIMIT_EXEMPT_PATHS: ['/api/sync/'] as readonly string[],
 } as const;
 
 /** Order settings */
