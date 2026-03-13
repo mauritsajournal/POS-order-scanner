@@ -29,7 +29,30 @@ export const createOrderSchema = z.object({
     .nullable()
     .default('net_30'),
   currency: z.string().length(3).default('EUR'),
+  session_id: z.string().uuid().nullable().default(null),
+  device_id: z.string().nullable().default(null),
 });
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 export type OrderLineInput = z.infer<typeof orderLineSchema>;
+
+/**
+ * Zod schema for PowerSync upload payload.
+ * PowerSync sends batches of operations grouped into transactions.
+ */
+const syncOperationSchema = z.object({
+  op: z.enum(['PUT', 'PATCH', 'DELETE']).default('PUT'),
+  table: z.string().min(1),
+  id: z.string().min(1),
+  data: z.record(z.unknown()).default({}),
+});
+
+const syncTransactionSchema = z.object({
+  ops: z.array(syncOperationSchema).max(100, 'Maximum 100 operations per transaction'),
+});
+
+export const syncUploadPayloadSchema = z.object({
+  transactions: z.array(syncTransactionSchema).min(1, 'At least one transaction required'),
+});
+
+export type SyncUploadPayload = z.infer<typeof syncUploadPayloadSchema>;

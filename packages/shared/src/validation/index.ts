@@ -1,8 +1,10 @@
 export {
   createOrderSchema,
   orderLineSchema,
+  syncUploadPayloadSchema,
   type CreateOrderInput,
   type OrderLineInput,
+  type SyncUploadPayload,
 } from './order';
 export {
   createCustomerSchema,
