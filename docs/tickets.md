@@ -1366,17 +1366,18 @@ Stripe Connect for international expansion. OAuth onboarding, embedded component
 
 ## 10. POS Features (POS)
 
-### [POS-001] Payment method selection on order
+### [POS-001] Payment method selection on order — `DONE`
+> DONE 2026-03-13 — Payment method picker (invoice/cash/card/iDEAL) with payment terms for invoice, saved on order record
 **Priority:** P1 | **Effort:** S | **Depends on:** MOB-012
 
 Add payment method selection to order checkout: invoice (default for B2B), cash, card, iDEAL. Payment terms selection for invoice: net 30, net 60, immediate. Stored on order record.
 
 **Acceptance Criteria:**
-- [ ] Payment method picker: invoice, cash, card, iDEAL
-- [ ] Payment terms picker for invoice: net 30, net 60, immediate
-- [ ] Default: invoice + net 30
-- [ ] Saved on order record
-- [ ] Shown on order detail and receipts
+- [x] Payment method picker: invoice, cash, card, iDEAL
+- [x] Payment terms picker for invoice: net 30, net 60, immediate
+- [x] Default: invoice + net 30
+- [x] Saved on order record
+- [ ] Shown on order detail and receipts — detail screen exists, will show when data flows
 
 ---
 

@@ -7,19 +7,30 @@ import {
   ActivityIndicator,
   Alert,
   StyleSheet,
+  ScrollView,
 } from 'react-native';
 import { router } from 'expo-router';
 import * as Crypto from 'expo-crypto';
 import { useCart } from '@/store/cart';
 import { useAuth } from '@/store/auth';
 import { useSession } from '@/store/session';
-import { formatPrice, lineTotal as calcLineTotal } from '@scanorder/shared';
+import {
+  formatPrice,
+  lineTotal as calcLineTotal,
+  PAYMENT_METHODS,
+  PAYMENT_METHOD_LABELS,
+  PAYMENT_TERMS,
+  PAYMENT_TERMS_LABELS,
+} from '@scanorder/shared';
+import type { PaymentMethod, PaymentTerms } from '@scanorder/shared';
 
 export default function NewOrderScreen() {
   const { lines, customer, notes, subtotal, taxAmount, total, clearCart } = useCart();
   const { user } = useAuth();
   const { getSessionId, isShiftOpen, requireShiftForOrders } = useSession();
   const [submitting, setSubmitting] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('invoice');
+  const [paymentTerms, setPaymentTerms] = useState<PaymentTerms>('net_30');
 
   async function handleSubmit() {
     if (requireShiftForOrders && !isShiftOpen()) {
@@ -52,6 +63,8 @@ export default function NewOrderScreen() {
       tax_amount: taxAmount(),
       total: total(),
       currency: 'EUR',
+      payment_method: paymentMethod,
+      payment_terms: paymentMethod === 'invoice' ? paymentTerms : null,
       notes,
       lines: lines.map((l, idx) => ({
         id: Crypto.randomUUID(),
@@ -76,12 +89,12 @@ export default function NewOrderScreen() {
     //   await db.insertInto('order_lines').values(line).execute();
     // }
 
-    console.log('[NewOrder] Created order:', order.id, 'lines:', order.lines.length);
+    console.log('[NewOrder] Created order:', order.id, 'payment:', paymentMethod, 'lines:', order.lines.length);
 
     clearCart();
     setSubmitting(false);
 
-    Alert.alert('Order created', `Order ${orderId.slice(0, 8)}… saved locally.`, [
+    Alert.alert('Order created', `Order ${orderId.slice(0, 8)}... saved locally.`, [
       { text: 'OK', onPress: () => router.replace('/(app)/(tabs)/orders') },
     ]);
   }
@@ -96,31 +109,97 @@ export default function NewOrderScreen() {
         <View style={{ width: 60 }} />
       </View>
 
-      <View style={styles.customerCard}>
-        {customer ? (
-          <>
-            <Text style={styles.customerName}>{customer.company_name}</Text>
-            {customer.contact_name && (
-              <Text style={styles.customerContact}>{customer.contact_name}</Text>
-            )}
-          </>
-        ) : (
-          <>
-            <Text style={styles.customerName}>Walk-in Sale</Text>
-            <Text style={styles.customerContact}>No customer assigned</Text>
-          </>
-        )}
-        {notes && (
-          <Text style={[styles.customerContact, { marginTop: 4, fontStyle: 'italic' }]}>
-            {notes}
-          </Text>
-        )}
-      </View>
-
       <FlatList
         data={lines}
         keyExtractor={(item) => item.id}
         style={styles.list}
+        ListHeaderComponent={
+          <>
+            {/* Customer Card */}
+            <View style={styles.customerCard}>
+              {customer ? (
+                <>
+                  <Text style={styles.customerName}>{customer.company_name}</Text>
+                  {customer.contact_name && (
+                    <Text style={styles.customerContact}>{customer.contact_name}</Text>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Text style={styles.customerName}>Walk-in Sale</Text>
+                  <Text style={styles.customerContact}>No customer assigned</Text>
+                </>
+              )}
+              {notes && (
+                <Text style={[styles.customerContact, { marginTop: 4, fontStyle: 'italic' }]}>
+                  {notes}
+                </Text>
+              )}
+            </View>
+
+            {/* Payment Method Selection */}
+            <View style={styles.paymentSection}>
+              <Text style={styles.sectionLabel}>Payment Method</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.paymentOptions}
+              >
+                {PAYMENT_METHODS.filter((m) => m !== 'other').map((method) => (
+                  <TouchableOpacity
+                    key={method}
+                    style={[
+                      styles.paymentChip,
+                      paymentMethod === method && styles.paymentChipActive,
+                    ]}
+                    onPress={() => setPaymentMethod(method)}
+                  >
+                    <Text
+                      style={[
+                        styles.paymentChipText,
+                        paymentMethod === method && styles.paymentChipTextActive,
+                      ]}
+                    >
+                      {PAYMENT_METHOD_LABELS[method]}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* Payment Terms (only for invoice) */}
+              {paymentMethod === 'invoice' && (
+                <>
+                  <Text style={[styles.sectionLabel, { marginTop: 10 }]}>Payment Terms</Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.paymentOptions}
+                  >
+                    {PAYMENT_TERMS.map((terms) => (
+                      <TouchableOpacity
+                        key={terms}
+                        style={[
+                          styles.paymentChip,
+                          paymentTerms === terms && styles.paymentChipActive,
+                        ]}
+                        onPress={() => setPaymentTerms(terms)}
+                      >
+                        <Text
+                          style={[
+                            styles.paymentChipText,
+                            paymentTerms === terms && styles.paymentChipTextActive,
+                          ]}
+                        >
+                          {PAYMENT_TERMS_LABELS[terms]}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </>
+              )}
+            </View>
+          </>
+        }
         renderItem={({ item }) => (
           <View style={styles.lineRow}>
             <View style={{ flex: 1 }}>
@@ -129,7 +208,7 @@ export default function NewOrderScreen() {
                 <Text style={styles.variantName}>{item.variant.name}</Text>
               )}
               <Text style={styles.lineDetail}>
-                {item.quantity}× {formatPrice(item.unitPrice)}
+                {item.quantity}x {formatPrice(item.unitPrice)}
               </Text>
             </View>
             <Text style={styles.lineTotal}>
@@ -194,6 +273,48 @@ const styles = StyleSheet.create({
   },
   customerName: { fontSize: 16, fontWeight: '600', color: '#111827' },
   customerContact: { fontSize: 14, color: '#6B7280', marginTop: 2 },
+
+  // Payment section
+  paymentSection: {
+    marginHorizontal: 12,
+    marginBottom: 8,
+    padding: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 6,
+  },
+  paymentOptions: {
+    gap: 6,
+  },
+  paymentChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  paymentChipActive: {
+    backgroundColor: '#EEF2FF',
+    borderColor: '#6366F1',
+  },
+  paymentChipText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  paymentChipTextActive: {
+    color: '#4F46E5',
+    fontWeight: '600',
+  },
+
   list: { flex: 1 },
   lineRow: {
     flexDirection: 'row',
