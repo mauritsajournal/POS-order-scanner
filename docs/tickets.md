@@ -589,18 +589,19 @@ Full order detail: header (order #, date, customer, event, status), line items t
 
 ---
 
-### [MOB-A006] New customer form
+### [MOB-A006] New customer form — `DONE`
+> DONE 2026-03-13 — NewCustomerForm component with Zod validation, all fields, Dutch-context placeholders. SQLite save stubbed pending PowerSync.
 **Priority:** P1 | **Effort:** S | **Depends on:** MOB-003
 
 Create new customer from mobile: company name (required), contact name, email, phone, VAT number, address (street, city, postal code, country), notes. Saves to local DB, syncs via PowerSync.
 
 **Acceptance Criteria:**
-- [ ] Form with all customer fields
-- [ ] Company name required, other fields optional
-- [ ] Zod validation on submit
-- [ ] Saved to local SQLite
-- [ ] Available for order assignment immediately
-- [ ] Syncs to Supabase when online
+- [x] Form with all customer fields
+- [x] Company name required, other fields optional
+- [x] Zod validation on submit
+- [ ] Saved to local SQLite — BLOCKED: PowerSync not yet connected
+- [x] Available for order assignment immediately (returned via onSave callback)
+- [ ] Syncs to Supabase when online — BLOCKED: PowerSync not yet connected
 
 ---
 
