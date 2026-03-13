@@ -7,6 +7,7 @@ import { syncUpload } from './routes/sync/upload';
 type Bindings = {
   ENVIRONMENT: string;
   SUPABASE_JWT_SECRET: string;
+  ALLOWED_ORIGINS?: string; // comma-separated list of allowed origins
   // Uncomment when Cloudflare resources are created:
   // IMAGES: R2Bucket;
   // CACHE: KVNamespace;
@@ -19,13 +20,26 @@ type Variables = {
 
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
+// Default development origins
+const DEV_ORIGINS = ['http://localhost:3000', 'http://localhost:8081'];
+
 // Global middleware
 app.use('*', logger());
-app.use('*', cors({
-  origin: ['http://localhost:3000', 'http://localhost:8081'], // dev origins
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization'],
-}));
+app.use('*', async (c, next) => {
+  // Parse allowed origins from environment, fall back to dev defaults
+  const envOrigins = c.env.ALLOWED_ORIGINS;
+  const origins = envOrigins
+    ? envOrigins.split(',').map((o: string) => o.trim()).filter(Boolean)
+    : DEV_ORIGINS;
+
+  const corsMiddleware = cors({
+    origin: origins,
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'Authorization'],
+  });
+
+  return corsMiddleware(c, next);
+});
 
 // Health check (public — no auth required)
 app.get('/health', (c) => c.json({ status: 'ok', environment: c.env.ENVIRONMENT }));
