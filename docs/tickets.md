@@ -1478,7 +1478,8 @@ Add text notes to the overall order. Shown during checkout, in order detail, on 
 
 ## 11. CI/CD & DevOps (CICD)
 
-### [CICD-001] GitHub Actions CI pipeline
+### [CICD-001] GitHub Actions CI pipeline — `DONE`
+> DONE 2026-03-13 — ci.yml with lint/typecheck/test, pnpm caching, concurrency
 **Priority:** P2 | **Effort:** M | **Depends on:** INFRA-001
 
 CI pipeline triggered on push and pull request. Jobs: lint, typecheck, test. Runs across all monorepo packages. Uses pnpm and Turborepo for caching.
