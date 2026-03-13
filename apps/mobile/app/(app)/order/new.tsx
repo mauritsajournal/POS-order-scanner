@@ -12,14 +12,20 @@ import { router } from 'expo-router';
 import * as Crypto from 'expo-crypto';
 import { useCart } from '@/store/cart';
 import { useAuth } from '@/store/auth';
+import { useSession } from '@/store/session';
 import { formatPrice, lineTotal as calcLineTotal } from '@scanorder/shared';
 
 export default function NewOrderScreen() {
   const { lines, customer, notes, subtotal, taxAmount, total, clearCart } = useCart();
   const { user } = useAuth();
+  const { getSessionId, isShiftOpen, requireShiftForOrders } = useSession();
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit() {
+    if (requireShiftForOrders && !isShiftOpen()) {
+      Alert.alert('No open shift', 'Please open a shift before creating orders.');
+      return;
+    }
     if (lines.length === 0) {
       Alert.alert('Empty cart', 'Add at least one product to submit an order.');
       return;
@@ -40,6 +46,7 @@ export default function NewOrderScreen() {
       id: orderId,
       tenant_id: tenantId,
       customer_id: customer?.id ?? null,
+      session_id: getSessionId(),
       status: 'draft' as const,
       subtotal: subtotal(),
       tax_amount: taxAmount(),
