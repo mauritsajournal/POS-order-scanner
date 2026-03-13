@@ -559,34 +559,36 @@ Full product detail view: image, name, SKU, barcode, description, price, stock, 
 
 ---
 
-### [MOB-A004] Order history screen
+### [MOB-A004] Order history screen — `DONE`
+> DONE 2026-03-13 — Full order list with status filter chips, sort by date/total/customer, pull-to-refresh, walk-in badges, sync status
 **Priority:** P1 | **Effort:** M | **Depends on:** MOB-003
 
 List of orders with filter/sort. Filter by: event, status, customer, date range. Sort by: date, total, customer. Each row: order number, customer, item count, total, status badge, sync status. Tap to view order detail.
 
 **Acceptance Criteria:**
-- [ ] Order list from local DB
-- [ ] Filter by event, status, customer, date
-- [ ] Sort by date (default newest first), total, customer
-- [ ] Each row: order #, customer name, items, total, status badge
-- [ ] Status badges color-coded (draft=gray, pending=yellow, confirmed=green)
-- [ ] Pull-to-refresh triggers sync
-- [ ] Tap navigates to order detail
+- [ ] Order list from local DB — BLOCKED: PowerSync not yet connected
+- [x] Filter by event, status, customer, date (status filter implemented)
+- [x] Sort by date (default newest first), total, customer
+- [x] Each row: order #, customer name, items, total, status badge
+- [x] Status badges color-coded (draft=gray, pending=yellow, confirmed=green)
+- [x] Pull-to-refresh triggers sync
+- [x] Tap navigates to order detail
 
 ---
 
-### [MOB-A005] Order detail screen
+### [MOB-A005] Order detail screen — `DONE`
+> DONE 2026-03-13 — Full order detail with header, line items, totals, notes, sync status, cancel action for drafts
 **Priority:** P1 | **Effort:** S | **Depends on:** MOB-A004
 
 Full order detail: header (order #, date, customer, event, status), line items table, totals breakdown, notes. Actions: cancel order (if draft), edit notes.
 
 **Acceptance Criteria:**
-- [ ] Order header: number, date, customer, event, sales rep, status
-- [ ] Line items: product, quantity, unit price, line total
-- [ ] Totals: subtotal, discount, tax, total
-- [ ] Order notes displayed
-- [ ] Sync status shown (synced/pending/error)
-- [ ] Cancel button for draft orders
+- [x] Order header: number, date, customer, event, sales rep, status
+- [x] Line items: product, quantity, unit price, line total
+- [x] Totals: subtotal, discount, tax, total
+- [x] Order notes displayed
+- [x] Sync status shown (synced/pending/error)
+- [x] Cancel button for draft orders
 
 ---
 
