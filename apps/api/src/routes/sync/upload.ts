@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import { createOrderSchema } from '@scanorder/shared';
+import { createOrderSchema, syncUploadPayloadSchema } from '@scanorder/shared';
 import type { AuthUser } from '../../middleware/auth';
 import { formatOrderNumber } from '../../lib/order-number';
 
@@ -20,17 +20,26 @@ export async function syncUpload(c: Context) {
   try {
     const body = await c.req.json();
 
-    // PowerSync sends: { transactions: [{ ops: [{ op: 'PUT', table, id, data }] }] }
-    const { transactions } = body;
-
-    if (!Array.isArray(transactions)) {
-      return c.json({ error: 'Invalid payload: transactions array required' }, 400);
+    // Validate top-level PowerSync upload structure with Zod
+    const payloadResult = syncUploadPayloadSchema.safeParse(body);
+    if (!payloadResult.success) {
+      return c.json({
+        error: 'Invalid payload',
+        details: payloadResult.error.issues.map((i) => i.message),
+      }, 400);
     }
+
+    const { transactions } = payloadResult.data;
 
     // Get authenticated user context (set by auth middleware)
     const user = c.get('user') as AuthUser | undefined;
-    const tenantId = user?.tenantId;
-    const userId = user?.userId;
+
+    if (!user || !user.tenantId || !user.userId) {
+      return c.json({ error: 'Unauthorized: missing user, tenant, or user ID' }, 401);
+    }
+
+    const tenantId = user.tenantId;
+    const userId = user.userId;
 
     // Get DB binding (Hyperdrive). If not configured, fall back to acknowledgement-only mode.
     const db = c.env.DB;
@@ -38,6 +47,12 @@ export async function syncUpload(c: Context) {
     const results: UploadResult[] = [];
 
     for (const tx of transactions) {
+      // Group ops within this PowerSync transaction by table
+      // so we can process order + its lines together atomically
+      const orderOps: Array<{ id: string; data: Record<string, unknown> }> = [];
+      const lineOps: Array<{ id: string; data: Record<string, unknown> }> = [];
+      const otherOps: Array<{ table: string; id: string; op: string }> = [];
+
       for (const op of tx.ops ?? []) {
         const { table, id, data, op: opType } = op;
 
@@ -47,41 +62,50 @@ export async function syncUpload(c: Context) {
           continue;
         }
 
-        try {
-          switch (table) {
-            case 'orders': {
-              const result = await handleOrderUpload(db, {
-                ...data,
-                id,
-                tenant_id: tenantId,
-                user_id: userId ?? data.user_id,
-              });
-              results.push({ table, id, ...result });
-              break;
+        switch (table) {
+          case 'orders': {
+            // Validate tenant_id matches auth context if provided by client
+            if (data.tenant_id && data.tenant_id !== tenantId) {
+              results.push({ table, id, status: 'error', error: 'tenant_id mismatch: order tenant does not match authenticated user' });
+              continue;
             }
-
-            case 'order_lines': {
-              const result = await handleOrderLineUpload(db, {
-                ...data,
-                id,
-              });
-              results.push({ table, id, ...result });
-              break;
-            }
-
-            default:
-              results.push({
-                table,
-                id,
-                status: 'error',
-                error: `Unknown table: ${table}`,
-              });
+            orderOps.push({ id, data: { ...data, id, tenant_id: tenantId, user_id: userId ?? data.user_id } });
+            break;
           }
-        } catch (err) {
-          const message = err instanceof Error ? err.message : 'Unknown error';
-          console.error(`Error processing ${table}/${id}:`, message);
-          results.push({ table, id, status: 'error', error: message });
+          case 'order_lines':
+            lineOps.push({ id, data: { ...data, id } });
+            break;
+          default:
+            otherOps.push({ table, id, op: opType ?? 'PUT' });
         }
+      }
+
+      // Process order + lines atomically within a transaction
+      if (orderOps.length > 0 || lineOps.length > 0) {
+        try {
+          const txResults = await handleOrderTransaction(db, orderOps, lineOps, tenantId);
+          results.push(...txResults);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Transaction failed';
+          console.error('Transaction error:', message);
+          // Mark all ops in this transaction as failed
+          for (const op of orderOps) {
+            results.push({ table: 'orders', id: op.id, status: 'error', error: message });
+          }
+          for (const op of lineOps) {
+            results.push({ table: 'order_lines', id: op.id, status: 'error', error: message });
+          }
+        }
+      }
+
+      // Handle unknown table ops
+      for (const op of otherOps) {
+        results.push({
+          table: op.table,
+          id: op.id,
+          status: 'error',
+          error: `Unknown table: ${op.table}`,
+        });
       }
     }
 
@@ -89,6 +113,67 @@ export async function syncUpload(c: Context) {
   } catch (err) {
     console.error('Sync upload error:', err);
     return c.json({ error: 'Internal server error' }, 500);
+  }
+}
+
+/**
+ * Process order and line operations within a single logical transaction.
+ * Wraps all inserts in BEGIN/COMMIT for atomicity.
+ * If any operation fails, the entire batch is rolled back.
+ */
+async function handleOrderTransaction(
+  db: HyperdriveBinding | undefined,
+  orderOps: Array<{ id: string; data: Record<string, unknown> }>,
+  lineOps: Array<{ id: string; data: Record<string, unknown> }>,
+  tenantId: string,
+): Promise<UploadResult[]> {
+  const results: UploadResult[] = [];
+
+  // If no DB connection, acknowledge all ops without persistence
+  if (!db) {
+    for (const op of orderOps) {
+      console.warn('No DB binding — acknowledging order without persistence:', op.id);
+      results.push({ table: 'orders', id: op.id, status: 'ok' });
+    }
+    for (const op of lineOps) {
+      results.push({ table: 'order_lines', id: op.id, status: 'ok' });
+    }
+    return results;
+  }
+
+  // Begin transaction
+  await db.prepare('BEGIN').bind().run();
+
+  try {
+    // Process orders first
+    for (const op of orderOps) {
+      const result = await handleOrderUpload(db, op.data);
+      results.push({ table: 'orders', id: op.id, ...result });
+      if (result.status === 'error') {
+        throw new Error(`Order ${op.id} failed: ${result.error}`);
+      }
+    }
+
+    // Process order lines
+    for (const op of lineOps) {
+      const result = await handleOrderLineUpload(db, op.data);
+      results.push({ table: 'order_lines', id: op.id, ...result });
+      if (result.status === 'error') {
+        throw new Error(`Order line ${op.id} failed: ${result.error}`);
+      }
+    }
+
+    // Commit transaction
+    await db.prepare('COMMIT').bind().run();
+    return results;
+  } catch (err) {
+    // Rollback on any failure
+    try {
+      await db.prepare('ROLLBACK').bind().run();
+    } catch (rollbackErr) {
+      console.error('Rollback failed:', rollbackErr);
+    }
+    throw err;
   }
 }
 
@@ -101,7 +186,7 @@ export async function syncUpload(c: Context) {
  * - Inserts into orders table
  */
 async function handleOrderUpload(
-  db: HyperdriveBinding | undefined,
+  db: HyperdriveBinding,
   data: Record<string, unknown>
 ): Promise<{ status: 'ok' | 'error'; error?: string; order_number?: string }> {
   // Validate order data
@@ -111,13 +196,6 @@ async function handleOrderUpload(
   }
 
   const order = parsed.data;
-
-  // If no DB connection (Hyperdrive not configured), acknowledge receipt
-  // This allows the endpoint to work in development without a live DB
-  if (!db) {
-    console.warn('No DB binding — acknowledging order without persistence:', order.id);
-    return { status: 'ok' };
-  }
 
   try {
     // Idempotency check: does this order already exist?
@@ -152,12 +230,12 @@ async function handleOrderUpload(
       `INSERT INTO orders (
         id, tenant_id, order_number, customer_id, event_id, user_id,
         status, subtotal, discount_amount, tax_amount, total, currency,
-        notes, payment_method, payment_terms, device_id,
+        notes, payment_method, payment_terms, device_id, session_id,
         created_offline, synced_at, created_at, updated_at
       ) VALUES (
         $1, $2, $3, $4, $5, $6,
         'pending', $7, $8, $9, $10, $11,
-        $12, $13, $14, $15,
+        $12, $13, $14, $15, $16,
         true, NOW(), NOW(), NOW()
       )`
     ).bind(
@@ -175,7 +253,8 @@ async function handleOrderUpload(
       order.notes,
       order.payment_method,
       order.payment_terms,
-      data.device_id as string ?? null
+      order.device_id ?? null,
+      order.session_id ?? null,
     ).run();
 
     return { status: 'ok', order_number: orderNumber };
@@ -189,32 +268,68 @@ async function handleOrderUpload(
 /**
  * Handle a single order line upload.
  *
+ * - Validates fields with explicit type checks
  * - Inserts the line item into order_lines
  * - Decrements stock on the product or variant
  */
 async function handleOrderLineUpload(
-  db: HyperdriveBinding | undefined,
+  db: HyperdriveBinding,
   data: Record<string, unknown>
 ): Promise<{ status: 'ok' | 'error'; error?: string }> {
-  if (!db) {
-    return { status: 'ok' };
+  // Validate order line fields with explicit type checks
+  const id = data.id;
+  const orderId = data.order_id;
+  const productId = data.product_id;
+  const variantId = data.variant_id ?? null;
+  const productName = data.product_name;
+  const productSku = data.product_sku;
+  const quantity = data.quantity;
+  const unitPrice = data.unit_price;
+  const discountPct = data.discount_pct ?? 0;
+  const taxRate = data.tax_rate ?? 2100;
+  const lineTotalVal = data.line_total;
+  const notes = data.notes ?? null;
+
+  // Validate required string fields
+  if (typeof id !== 'string' || !id) {
+    return { status: 'error', error: 'Missing or invalid order line id' };
+  }
+  if (typeof orderId !== 'string' || !orderId) {
+    return { status: 'error', error: 'Missing or invalid order_id' };
+  }
+  if (typeof productId !== 'string' || !productId) {
+    return { status: 'error', error: 'Missing or invalid product_id' };
+  }
+  if (typeof productName !== 'string' || !productName) {
+    return { status: 'error', error: 'Missing or invalid product_name' };
+  }
+  if (typeof productSku !== 'string' || !productSku) {
+    return { status: 'error', error: 'Missing or invalid product_sku' };
   }
 
-  const id = data.id as string;
-  const orderId = data.order_id as string;
-  const productId = data.product_id as string;
-  const variantId = data.variant_id as string | null;
-  const productName = data.product_name as string;
-  const productSku = data.product_sku as string;
-  const quantity = data.quantity as number;
-  const unitPrice = data.unit_price as number;
-  const discountPct = (data.discount_pct as number) ?? 0;
-  const taxRate = (data.tax_rate as number) ?? 2100;
-  const lineTotal = data.line_total as number;
-  const notes = data.notes as string | null ?? null;
+  // Validate numeric fields
+  if (typeof quantity !== 'number' || !Number.isInteger(quantity) || quantity <= 0) {
+    return { status: 'error', error: `quantity must be a positive integer, got: ${quantity}` };
+  }
+  if (typeof unitPrice !== 'number' || !Number.isInteger(unitPrice) || unitPrice < 0) {
+    return { status: 'error', error: `unit_price must be a non-negative integer (cents), got: ${unitPrice}` };
+  }
+  if (typeof discountPct !== 'number' || discountPct < 0 || discountPct > 100) {
+    return { status: 'error', error: `discount_pct must be 0-100, got: ${discountPct}` };
+  }
+  if (typeof taxRate !== 'number' || !Number.isInteger(taxRate) || taxRate < 0) {
+    return { status: 'error', error: `tax_rate must be a non-negative integer (basis points), got: ${taxRate}` };
+  }
+  if (typeof lineTotalVal !== 'number' || !Number.isInteger(lineTotalVal) || lineTotalVal < 0) {
+    return { status: 'error', error: `line_total must be a non-negative integer (cents), got: ${lineTotalVal}` };
+  }
 
-  if (!orderId || !productId || !productName || !productSku || !quantity || !unitPrice) {
-    return { status: 'error', error: 'Missing required order line fields' };
+  // Validate optional fields
+  if (variantId !== null && typeof variantId !== 'string') {
+    return { status: 'error', error: 'variant_id must be a string or null' };
+  }
+  if (notes !== null && typeof notes !== 'string') {
+    return { status: 'error', error: 'notes must be a string or null' };
   }
 
   try {
@@ -237,7 +352,7 @@ async function handleOrderLineUpload(
     ).bind(
       id, orderId, productId, variantId,
       productName, productSku, quantity, unitPrice,
-      discountPct, taxRate, lineTotal, notes
+      discountPct, taxRate, lineTotalVal, notes
     ).run();
 
     // Decrement stock on the product or variant
