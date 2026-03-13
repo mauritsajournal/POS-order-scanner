@@ -23,6 +23,8 @@ interface CartState {
   addItem: (product: Product, variant?: ProductVariant) => number; // returns new quantity
   removeItem: (lineId: string) => void;
   updateQuantity: (lineId: string, quantity: number) => void;
+  setLineDiscount: (lineId: string, discountPct: number) => void;
+  setLineNotes: (lineId: string, notes: string | null) => void;
   setCustomer: (customer: Customer | null) => void;
   setNotes: (notes: string | null) => void;
   clearCart: () => void;
@@ -83,6 +85,23 @@ export const useCart = create<CartState>((set, get) => ({
     }
     set({
       lines: get().lines.map((l) => (l.id === lineId ? { ...l, quantity } : l)),
+    });
+  },
+
+  setLineDiscount: (lineId, discountPct) => {
+    const clamped = Math.max(0, Math.min(100, discountPct));
+    set({
+      lines: get().lines.map((l) =>
+        l.id === lineId ? { ...l, discountPct: clamped } : l,
+      ),
+    });
+  },
+
+  setLineNotes: (lineId, notes) => {
+    set({
+      lines: get().lines.map((l) =>
+        l.id === lineId ? { ...l, notes } : l,
+      ),
     });
   },
 
