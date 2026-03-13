@@ -24,7 +24,7 @@ export interface AuthUser {
  */
 export const authMiddleware: MiddlewareHandler<{
   Bindings: { SUPABASE_JWT_SECRET: string };
-  Variables: { user: AuthUser };
+  Variables: { user: AuthUser; tenantId: string };
 }> = async (c, next) => {
   const authHeader = c.req.header('Authorization');
 
@@ -57,6 +57,7 @@ export const authMiddleware: MiddlewareHandler<{
     };
 
     c.set('user', user);
+    c.set('tenantId', tenantId);
     await next();
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Token validation failed';

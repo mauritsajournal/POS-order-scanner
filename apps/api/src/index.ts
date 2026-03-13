@@ -18,6 +18,7 @@ type Bindings = {
 
 type Variables = {
   user: AuthUser;
+  tenantId: string;
 };
 
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();

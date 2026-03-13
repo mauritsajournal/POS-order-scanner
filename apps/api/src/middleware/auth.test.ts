@@ -85,7 +85,7 @@ describe('authMiddleware', () => {
   it('rejects request without Authorization header', async () => {
     const res = await app.request('http://localhost/api/test', {}, ENV);
     expect(res.status).toBe(401);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body.error).toContain('Missing');
   });
 
@@ -103,7 +103,7 @@ describe('authMiddleware', () => {
     });
     const res = await req(app, token);
     expect(res.status).toBe(401);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body.error).toContain('expired');
   });
 
@@ -119,7 +119,7 @@ describe('authMiddleware', () => {
     );
     const res = await req(app, token);
     expect(res.status).toBe(401);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body.error).toContain('signature');
   });
 
@@ -132,7 +132,7 @@ describe('authMiddleware', () => {
     });
     const res = await req(app, token);
     expect(res.status).toBe(403);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body.error).toContain('tenant_id');
   });
 
@@ -144,7 +144,7 @@ describe('authMiddleware', () => {
     });
     const res = await req(app, token);
     expect(res.status).toBe(401);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body.error).toContain('subject');
   });
 
@@ -157,7 +157,7 @@ describe('authMiddleware', () => {
     });
     const res = await req(app, token);
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body.user).toEqual({
       userId: 'user-123',
       tenantId: 'tenant-abc',
@@ -175,8 +175,8 @@ describe('authMiddleware', () => {
     });
     const res = await req(app, token);
     expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.user.role).toBe('sales_rep');
+    const body = await res.json() as Record<string, unknown>;
+    expect((body.user as Record<string, unknown>).role).toBe('sales_rep');
   });
 
   it('rejects malformed JWT (not 3 parts)', async () => {
@@ -194,7 +194,7 @@ describe('authMiddleware', () => {
     });
     const res = await req(app, token);
     expect(res.status).toBe(401);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body.error).toContain('not yet valid');
   });
 });
