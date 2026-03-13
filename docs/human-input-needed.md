@@ -170,3 +170,22 @@ Once these are done, Claude can continue implementing the remaining P0 tickets (
 - **Notes:** 6 tickets completed this run. All 96 unit tests pass. App icon generated from SVG with sharp-cli. Offline design system: OfflineBanner, expanded SyncIndicator, PendingBadge, SyncStatusTag. iPhone scan screen with collapsible cart bottom sheet and cart badge. Integration adapter base class with retry/backoff. VIES VAT validation endpoint. Per-line discounts and notes in cart. Also completed 5 tickets on fuel-finder-nl.
 
 ---
+
+## Run Summary — 2026-03-13 22:55 UTC
+
+- **Tickets completed:** None (codebase review and bug fix run)
+- **Bugs fixed:**
+  1. FlashList `estimatedItemSize` prop removed in @shopify/flash-list v2 (catalog.tsx typecheck error)
+  2. TypeScript `never` type narrowing on const null order stub (order/[id].tsx — 22 typecheck errors)
+  3. Customer type mismatch in cart.test.ts — missing `price_group`, stale flat address fields (2 typecheck errors)
+  4. `import.meta` incompatible with tsconfig module setting in vitest.config.ts (2 typecheck errors)
+  5. Web app missing ESLint config — `next lint` deprecated in Next.js 15.5, replaced with eslint CLI
+  6. Dashboard using `<a>` tags instead of Next.js `<Link>` component (ESLint error)
+  7. Products page using `<img>` instead of next/image `<Image>` (ESLint warning)
+  8. CI pipeline `continue-on-error: true` on lint/typecheck — removed, now strictly enforced
+  9. Missing `next.config.ts` remote image patterns for product images
+- **Result:** All 96 tests pass. Typecheck clean across all 5 packages. Lint clean across shared + web.
+- **Infrastructure blockers unchanged:** PowerSync, Hyperdrive, Supabase migrations still need human action (see critical blockers above)
+- **Notes:** Deep codebase review run focused on build health and code quality rather than new feature tickets. The mobile typecheck errors noted in the previous run summary (cart.test.ts, vitest.config.ts) are now fully resolved. CI pipeline will now fail on typecheck/lint regressions.
+
+---
