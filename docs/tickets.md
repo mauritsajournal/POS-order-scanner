@@ -1608,7 +1608,8 @@ Design app icon for iOS and Android. Splash/launch screen. Follows platform guid
 
 ---
 
-### [DES-003] Offline state visual design
+### [DES-003] Offline state visual design — `DONE`
+> DONE 2026-03-13 — OfflineBanner, expanded SyncIndicator (5 states), SyncStatusTag, PendingBadge
 **Priority:** P1 | **Effort:** S | **Depends on:** DES-001
 
 Design the offline/online UI patterns. Offline banner at top of screen. Sync indicator styles (green dot = synced, yellow spinner = syncing, red dot = offline with pending). Pending upload badge on orders tab.
