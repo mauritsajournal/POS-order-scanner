@@ -1182,7 +1182,8 @@ Server-side sequential order number generation. Format: `SO-NNNN` (e.g., SO-0001
 
 ## 8. Integrations (INT)
 
-### [INT-001] Integration adapter interface
+### [INT-001] Integration adapter interface — `DONE`
+> DONE 2026-03-13 — IntegrationAdapter interface + BaseIntegrationAdapter with retry, error classification, credential mgmt
 **Priority:** P2 | **Effort:** S | **Depends on:** PKG-001
 
 Define the TypeScript interface for integration adapters: `pullProducts`, `pushOrder`, `pullCustomers`, `pushCustomer`, `pushInvoice`, `handleWebhook`, `testConnection`. Base class with common functionality (error handling, retry, logging).
