@@ -1566,17 +1566,18 @@ Automated database migrations on deploy. Generate Drizzle migrations from schema
 
 ## 12. Design & UX (DES)
 
-### [DES-001] Design system tokens (colors, typography, spacing)
+### [DES-001] Design system tokens (colors, typography, spacing) — `DONE`
+> DONE 2026-03-13 — Full design tokens in @scanorder/shared/design/tokens with Tailwind extension
 **Priority:** P1 | **Effort:** S | **Depends on:** —
 
 Define design tokens: color palette (brand colors, semantic colors for status), typography scale, spacing scale, border radius, shadows. Shared between mobile (NativeWind) and web (Tailwind). High contrast for trade show floor visibility.
 
 **Acceptance Criteria:**
-- [ ] Color tokens: brand, success, warning, error, neutral scales
-- [ ] High-contrast mode option for bright environments
-- [ ] Typography: font family, size scale, line heights
-- [ ] Spacing scale consistent between web and mobile
-- [ ] Tailwind config extension in shared config package
+- [x] Color tokens: brand, success, warning, error, neutral scales
+- [x] High-contrast mode option for bright environments
+- [x] Typography: font family, size scale, line heights
+- [x] Spacing scale consistent between web and mobile
+- [x] Tailwind config extension in shared config package
 
 ---
 

@@ -12,3 +12,6 @@ export * from './utils';
 
 // Configuration
 export * from './config';
+
+// Design tokens
+export * from './design/tokens';
