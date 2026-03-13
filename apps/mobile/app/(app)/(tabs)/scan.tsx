@@ -1,5 +1,6 @@
-import { View, useWindowDimensions } from 'react-native';
+import { View, useWindowDimensions, StyleSheet } from 'react-native';
 import { SplitPane } from '@/components/layout/SplitPane';
+import { PhoneCartSheet } from '@/components/layout/PhoneCartSheet';
 import { BarcodeScanner } from '@/components/scanner/BarcodeScanner';
 import { HardwareScannerInput } from '@/components/scanner/HardwareScannerInput';
 import { ScanFeedback } from '@/components/scanner/ScanFeedback';
@@ -37,27 +38,67 @@ export default function ScanScreen() {
     setLastScanned({ product: result.product, variant: result.variant, quantity: qty });
   }, [lookupByBarcode, addItem]);
 
-  const leftPane = (
-    <View style={{ flex: 1 }}>
-      <SyncIndicator />
-      <BarcodeScanner onScan={handleScan} />
-      <HardwareScannerInput onScan={handleScan} />
-      <SearchBar placeholder="Search product or scan..." context="products" />
-      <ScanFeedback lastScanned={lastScanned} error={lookupError?.message ?? scanError} />
-    </View>
-  );
-
-  const rightPane = <Cart />;
-
+  // Tablet: side-by-side split pane
   if (isTablet) {
-    return <SplitPane left={leftPane} right={rightPane} ratio={0.55} />;
+    const leftPane = (
+      <View style={{ flex: 1 }}>
+        <SyncIndicator />
+        <BarcodeScanner onScan={handleScan} />
+        <HardwareScannerInput onScan={handleScan} />
+        <SearchBar placeholder="Search product or scan..." context="products" />
+        <ScanFeedback lastScanned={lastScanned} error={lookupError?.message ?? scanError} />
+      </View>
+    );
+
+    return <SplitPane left={leftPane} right={<Cart />} ratio={0.55} />;
   }
 
-  // Phone: stacked layout
+  // Phone: stacked layout (MOB-A001)
+  // Camera viewfinder top ~40%, last-scanned card, collapsible cart bottom sheet
   return (
-    <View style={{ flex: 1 }}>
-      {leftPane}
-      {rightPane}
+    <View style={styles.phoneContainer}>
+      {/* Status bar */}
+      <View style={styles.statusBar}>
+        <SyncIndicator compact />
+      </View>
+
+      {/* Camera viewfinder - top portion */}
+      <View style={styles.cameraSection}>
+        <BarcodeScanner onScan={handleScan} />
+        <HardwareScannerInput onScan={handleScan} />
+      </View>
+
+      {/* Last scanned product card + search */}
+      <View style={styles.productSection}>
+        <SearchBar placeholder="Zoek product..." context="products" />
+        <ScanFeedback lastScanned={lastScanned} error={lookupError?.message ?? scanError} />
+      </View>
+
+      {/* Collapsible cart bottom sheet */}
+      <PhoneCartSheet />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  phoneContainer: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  statusBar: {
+    paddingHorizontal: 8,
+    paddingTop: 4,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  cameraSection: {
+    flex: 4, // ~40% of screen
+    backgroundColor: '#000000',
+  },
+  productSection: {
+    flex: 6, // ~60% remaining (with cart sheet overlapping bottom)
+    paddingHorizontal: 12,
+    paddingTop: 8,
+  },
+});
