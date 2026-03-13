@@ -1988,7 +1988,8 @@ API-007 (order numbers)
 
 *Added 2026-03-12 — from automated codebase analysis against blueprint, market analysis, and tech stack research.*
 
-### [QA-001] Fix auth context silent failure in sync upload — `NOT STARTED`
+### [QA-001] Fix auth context silent failure in sync upload — `DONE`
+> DONE 2026-03-13 — Upload handler returns 401 if user/tenantId/userId missing
 **Priority:** P0 | **Effort:** XS | **Depends on:** API-001
 
 If `user` is undefined in the upload handler, `tenantId` and `userId` silently become `undefined`. Orders could be inserted without tenant isolation, breaking multi-tenancy.
@@ -2000,7 +2001,8 @@ If `user` is undefined in the upload handler, `tenantId` and `userId` silently b
 
 ---
 
-### [QA-002] Fix order line type assertions without validation — `NOT STARTED`
+### [QA-002] Fix order line type assertions without validation — `DONE`
+> DONE 2026-03-13 — All order line fields validated with explicit type checks before insert
 **Priority:** P0 | **Effort:** XS | **Depends on:** API-002
 
 Upload handler uses raw `as` casts on `data.quantity`, `data.unit_price` etc. If values are `undefined` or `NaN`, the SQL insert will silently fail or corrupt data.
@@ -2013,7 +2015,8 @@ Upload handler uses raw `as` casts on `data.quantity`, `data.unit_price` etc. If
 
 ---
 
-### [QA-003] Fix mobile order submission missing line discount — `NOT STARTED`
+### [QA-003] Fix mobile order submission missing line discount — `DONE`
+> DONE 2026-03-13 — line_total uses shared lineTotal() utility with discount_pct
 **Priority:** P0 | **Effort:** XS | **Depends on:** MOB-012
 
 `order/new.tsx` calculates `line_total` as `unitPrice * quantity` without applying `discountPct`. Server receives incorrect totals, causing discrepancy between device display and persisted data.
@@ -2025,7 +2028,8 @@ Upload handler uses raw `as` casts on `data.quantity`, `data.unit_price` etc. If
 
 ---
 
-### [QA-004] Sync Zod schema with shared types (session_id, device_id) — `NOT STARTED`
+### [QA-004] Sync Zod schema with shared types (session_id, device_id) — `DONE`
+> DONE 2026-03-13 — createOrderSchema includes session_id and device_id fields
 **Priority:** P0 | **Effort:** XS | **Depends on:** PKG-002
 
 `createOrderSchema` does not include `session_id` or `device_id` fields that exist in the `Order` shared type. These fields are silently dropped during Zod validation.
@@ -2037,7 +2041,8 @@ Upload handler uses raw `as` casts on `data.quantity`, `data.unit_price` etc. If
 
 ---
 
-### [QA-005] Add Zod validation for PowerSync upload payload — `NOT STARTED`
+### [QA-005] Add Zod validation for PowerSync upload payload — `DONE`
+> DONE 2026-03-13 — syncUploadPayloadSchema validates transactions/ops structure, max 100 ops
 **Priority:** P0 | **Effort:** S | **Depends on:** API-002
 
 The sync upload handler does not validate the top-level `transactions` structure. Malformed payloads could crash the handler or be silently ignored. DOS risk.
@@ -2049,7 +2054,8 @@ The sync upload handler does not validate the top-level `transactions` structure
 
 ---
 
-### [QA-006] Add auth guard to web dashboard pages — `NOT STARTED`
+### [QA-006] Add auth guard to web dashboard pages — `DONE`
+> DONE 2026-03-13 — Next.js middleware redirects unauthenticated users to /login
 **Priority:** P0 | **Effort:** S | **Depends on:** WEB-002
 
 Dashboard pages query Supabase without checking authentication. Unauthenticated users can access `/orders`, `/orders/[id]`, and dashboard home. Errors are returned but not handled.
@@ -2061,7 +2067,8 @@ Dashboard pages query Supabase without checking authentication. Unauthenticated 
 
 ---
 
-### [QA-007] Wrap order + line inserts in database transaction — `NOT STARTED`
+### [QA-007] Wrap order + line inserts in database transaction — `DONE`
+> DONE 2026-03-13 — Order + lines wrapped in BEGIN/COMMIT with ROLLBACK on failure
 **Priority:** P0 | **Effort:** S | **Depends on:** API-002
 
 Orders and order lines are inserted separately. If order succeeds but a line fails, the database has an orphaned order with missing lines and no rollback.
@@ -2073,7 +2080,8 @@ Orders and order lines are inserted separately. If order succeeds but a line fai
 
 ---
 
-### [QA-008] Fix Customer type missing city/country fields — `NOT STARTED`
+### [QA-008] Fix Customer type missing city/country fields — `DONE`
+> DONE 2026-03-13 — Already correct: Customer type has address.city/country via CustomerAddress, modal uses optional chaining
 **Priority:** P0 | **Effort:** XS | **Depends on:** PKG-001
 
 `CustomerSelectModal.tsx` references `customer.city` and `customer.country` but the `Customer` shared type has no `city` or `country` fields. This causes typecheck failure.
@@ -2085,7 +2093,8 @@ Orders and order lines are inserted separately. If order succeeds but a line fai
 
 ---
 
-### [QA-009] Fix web build — AuthLayout return type annotation — `NOT STARTED`
+### [QA-009] Fix web build — AuthLayout return type annotation — `DONE`
+> DONE 2026-03-13 — Explicit JSX.Element return type added
 **Priority:** P0 | **Effort:** XS | **Depends on:** WEB-001
 
 `apps/web/app/(auth)/layout.tsx` fails to build because the inferred return type references transitive `@types/react` from pnpm's `.pnpm` directory. Classic pnpm strict hoisting issue.
@@ -2096,7 +2105,8 @@ Orders and order lines are inserted separately. If order succeeds but a line fai
 
 ---
 
-### [QA-010] Fix lint — add eslint as dependency — `NOT STARTED`
+### [QA-010] Fix lint — add eslint as dependency — `DONE`
+> DONE 2026-03-13 — eslint 8.x added to config package, lint passes for shared
 **Priority:** P0 | **Effort:** XS | **Depends on:** INFRA-003
 
 `pnpm lint` fails because `eslint` binary is not installed. The lint script references `eslint` but it's not in devDependencies.
@@ -2121,7 +2131,8 @@ The `/api/sync/upload` endpoint has no rate limiting. A malicious or buggy devic
 
 ---
 
-### [QA-012] Fix CORS hardcoded origins — `NOT STARTED`
+### [QA-012] Fix CORS hardcoded origins — `DONE`
+> DONE 2026-03-13 — CORS origins read from ALLOWED_ORIGINS env var
 **Priority:** P1 | **Effort:** XS | **Depends on:** INFRA-009
 
 CORS origins are hardcoded to `localhost:3000` and `localhost:8081`. Production deployment will fail or be insecure.
@@ -2133,7 +2144,8 @@ CORS origins are hardcoded to `localhost:3000` and `localhost:8081`. Production 
 
 ---
 
-### [QA-013] Replace Google connectivity check with own API heartbeat — `NOT STARTED`
+### [QA-013] Replace Google connectivity check with own API heartbeat — `DONE`
+> DONE 2026-03-13 — Network check now pings own /health endpoint
 **Priority:** P1 | **Effort:** XS | **Depends on:** MOB-016
 
 `useNetwork` hook pings `google.com/generate_204` which can be blocked by corporate networks or firewalls, causing false offline detection.
@@ -2157,7 +2169,8 @@ Hardcoded values scattered across the codebase: network timeout (3000ms), poll i
 
 ---
 
-### [QA-015] Use shared formatPrice consistently across web dashboard — `NOT STARTED`
+### [QA-015] Use shared formatPrice consistently across web dashboard — `DONE`
+> DONE 2026-03-13 — Dashboard home uses formatPrice from @scanorder/shared
 **Priority:** P2 | **Effort:** XS | **Depends on:** PKG-003
 
 Web dashboard uses inline `Intl.NumberFormat` calls instead of the shared `formatPrice` utility, creating inconsistency risk and unnecessary object creation per render.
@@ -2180,7 +2193,8 @@ Web dashboard uses inline `Intl.NumberFormat` calls instead of the shared `forma
 
 ---
 
-### [QA-017] Add tenant_id to mobile order creation — `NOT STARTED`
+### [QA-017] Add tenant_id to mobile order creation — `DONE`
+> DONE 2026-03-13 — Mobile includes tenant_id from auth, API validates match
 **Priority:** P0 | **Effort:** XS | **Depends on:** MOB-012
 
 `order/new.tsx` creates orders without `tenant_id`. The API infers it from auth context, but on shared devices this is fragile. Mobile should always include `tenant_id` and the API should validate it matches auth context.
@@ -2196,7 +2210,8 @@ Web dashboard uses inline `Intl.NumberFormat` calls instead of the shared `forma
 
 *Added 2026-03-12 — tests designed from codebase analysis. These test the critical paths that currently have zero coverage.*
 
-### [TEST-N001] Unit tests for shared pricing utilities — `NOT STARTED`
+### [TEST-N001] Unit tests for shared pricing utilities — `DONE`
+> DONE 2026-03-13 — 18 tests for formatPrice, lineTotal, calculateTax, calculateOrderTotals
 **Priority:** P0 | **Effort:** S | **Depends on:** PKG-003, QA-010
 
 Zero test coverage on price formatting, tax calculation, and line total computation. These are used in cart, order submission, and web display.
@@ -2211,7 +2226,8 @@ Zero test coverage on price formatting, tax calculation, and line total computat
 
 ---
 
-### [TEST-N002] Unit tests for barcode validation — `NOT STARTED`
+### [TEST-N002] Unit tests for barcode validation — `DONE`
+> DONE 2026-03-13 — 19 tests for EAN-13, EAN-8, UPC-A, detectBarcodeType
 **Priority:** P0 | **Effort:** S | **Depends on:** PKG-003
 
 Barcode validation (EAN-13, EAN-8, UPC-A check digit) has no tests. Invalid barcodes could be accepted or valid ones rejected.
@@ -2225,7 +2241,8 @@ Barcode validation (EAN-13, EAN-8, UPC-A check digit) has no tests. Invalid barc
 
 ---
 
-### [TEST-N003] Unit tests for Zod validation schemas — `NOT STARTED`
+### [TEST-N003] Unit tests for Zod validation schemas — `DONE`
+> DONE 2026-03-13 — 27 tests for orderLine, createOrder, syncUploadPayload schemas
 **Priority:** P0 | **Effort:** S | **Depends on:** PKG-002
 
 Zod schemas for orders, customers, and products have no tests. Edge cases (negative quantities, missing required fields, UUID format) are not verified.
@@ -2313,7 +2330,8 @@ JWT middleware validates tokens but has no tests. Edge cases: expired tokens, mi
 
 ---
 
-### [TEST-N009] Vitest configuration setup — `NOT STARTED`
+### [TEST-N009] Vitest configuration setup — `DONE`
+> DONE 2026-03-13 — vitest.config.ts for shared and API, pnpm test passes
 **Priority:** P0 | **Effort:** XS | **Depends on:** INFRA-001
 
 Vitest is listed as a dependency but no `vitest.config.ts` exists. `pnpm test` runs vitest but exits with code 1 because there are no test files.

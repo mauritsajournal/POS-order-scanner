@@ -1,6 +1,6 @@
 # Human Input Needed
 
-**Last updated:** 2026-03-12
+**Last updated:** 2026-03-13
 **Context:** These are blockers that Claude cannot resolve autonomously. They require human action — account creation, dashboard configuration, credential provisioning, or physical device access.
 
 ---
@@ -128,5 +128,15 @@ Once these are done, Claude can continue implementing the remaining P0 tickets (
 - **Tickets skipped (blocked):** #INFRA-004 (Supabase local dev), #INFRA-008 (PowerSync setup), #INFRA-010 (Hyperdrive), #MOB-003 (PowerSync client), #MOB-008 (product lookup), #MOB-012 (order submission offline queue)
 - **Tickets remaining (P0, not blocked):** None — all remaining P0 tickets are blocked by human input (PowerSync/Hyperdrive/Supabase setup)
 - **Notes:** All three workable P0 tickets were implemented and pass typecheck. API-002 upload handler works in ack-only mode without Hyperdrive, and will perform full DB writes once Hyperdrive binding is configured. The order_sequences table was added to Drizzle schema but needs to be applied to the live DB via migration (blocker #3).
+
+---
+
+## Run Summary — 2026-03-13 00:30 UTC
+
+- **Tickets completed:** #QA-001 (auth context guard), #QA-002 (order line validation), #QA-003 (line discount fix), #QA-004 (session_id/device_id in Zod), #QA-005 (upload payload validation), #QA-006 (web auth middleware), #QA-007 (DB transaction wrapping), #QA-008 (customer type — already correct), #QA-009 (AuthLayout return type), #QA-010 (eslint setup), #QA-012 (CORS env config), #QA-013 (own API heartbeat), #QA-015 (shared formatPrice), #QA-017 (tenant_id in mobile orders), #TEST-N009 (Vitest config), #TEST-N001 (pricing tests), #TEST-N002 (barcode tests), #TEST-N003 (Zod schema tests)
+- **Tickets skipped (blocked):** #QA-016 (needs PowerSync — MOB-003), #QA-014 (lower priority, deferred), #QA-011 (rate limiting — needs KV or in-memory, deferred)
+- **Tickets remaining (not blocked, not started):** #QA-011 (rate limiting), #QA-014 (centralize config), #TEST-N004..N008 (integration/unit tests), plus all P1+ feature tickets
+- **Infrastructure blockers unchanged:** PowerSync, Hyperdrive, Supabase migrations still need human action (see critical blockers above)
+- **Notes:** 18 tickets completed this run. All 64 unit tests pass. Typecheck passes for all packages (shared, api, web, mobile). Lint passes for shared package. Major security fixes: auth guard, input validation, tenant isolation, transaction safety. Test coverage added for pricing, barcodes, and validation schemas.
 
 ---
