@@ -1,13 +1,14 @@
 import { useRef, useCallback } from 'react';
 import { TextInput, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { SCANNER } from '@scanorder/shared';
 
 interface HardwareScannerInputProps {
   onScan: (barcode: string) => void;
   minLength?: number;
 }
 
-export function HardwareScannerInput({ onScan, minLength = 8 }: HardwareScannerInputProps) {
+export function HardwareScannerInput({ onScan, minLength = SCANNER.MIN_BARCODE_LENGTH }: HardwareScannerInputProps) {
   const inputRef = useRef<TextInput>(null);
   const lastScanTime = useRef(0);
 
@@ -16,7 +17,7 @@ export function HardwareScannerInput({ onScan, minLength = 8 }: HardwareScannerI
       const trimmed = text.trim();
       const now = Date.now();
 
-      if (trimmed.length >= minLength && now - lastScanTime.current > 500) {
+      if (trimmed.length >= minLength && now - lastScanTime.current > SCANNER.SCAN_DEBOUNCE_MS) {
         lastScanTime.current = now;
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         onScan(trimmed);

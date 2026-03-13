@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import Constants from 'expo-constants';
+import { NETWORK } from '@scanorder/shared';
 
 // API base URL from Expo config, with fallback for dev
 const API_BASE_URL =
@@ -19,7 +20,7 @@ export function useNetwork() {
     async function checkConnection() {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 3000);
+        const timeout = setTimeout(() => controller.abort(), NETWORK.CONNECTIVITY_TIMEOUT_MS);
         const response = await fetch(`${API_BASE_URL}/health`, {
           method: 'GET',
           signal: controller.signal,
@@ -41,7 +42,7 @@ export function useNetwork() {
     });
 
     // Poll every 30 seconds
-    const interval = setInterval(checkConnection, 30_000);
+    const interval = setInterval(checkConnection, NETWORK.POLL_INTERVAL_MS);
 
     return () => {
       subscription.remove();

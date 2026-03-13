@@ -2,6 +2,7 @@ import { useRef, useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-camera';
 import * as Haptics from 'expo-haptics';
+import { SCANNER } from '@scanorder/shared';
 
 interface BarcodeScannerProps {
   onScan: (barcode: string) => void;
@@ -21,8 +22,8 @@ export function BarcodeScanner({ onScan }: BarcodeScannerProps) {
       if (!barcode) return;
 
       const now = Date.now();
-      // Debounce: same barcode within 500ms
-      if (barcode === lastScannedRef.current && now - lastScannedTimeRef.current < 500) {
+      // Debounce: same barcode within scan debounce window
+      if (barcode === lastScannedRef.current && now - lastScannedTimeRef.current < SCANNER.SCAN_DEBOUNCE_MS) {
         return;
       }
 

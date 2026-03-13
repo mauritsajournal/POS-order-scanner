@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { authMiddleware, type AuthUser } from './middleware/auth';
 import { syncUpload } from './routes/sync/upload';
+import { API } from '@scanorder/shared';
 
 type Bindings = {
   ENVIRONMENT: string;
@@ -20,8 +21,8 @@ type Variables = {
 
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
-// Default development origins
-const DEV_ORIGINS = ['http://localhost:3000', 'http://localhost:8081'];
+// Default development origins from shared config
+const DEV_ORIGINS = API.DEV_ORIGINS as unknown as string[];
 
 // Global middleware
 app.use('*', logger());
