@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { formatPrice } from '@scanorder/shared';
 
 export default async function DashboardHome() {
   const supabase = await createClient();
@@ -28,7 +29,7 @@ export default async function DashboardHome() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-sm font-medium text-gray-600">Revenue</p>
           <p className="text-3xl font-bold text-gray-900 mt-1">
-            {new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(totalRevenue / 100)}
+            {formatPrice(totalRevenue)}
           </p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-6">
