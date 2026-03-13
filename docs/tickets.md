@@ -1595,7 +1595,8 @@ Define design tokens: color palette (brand colors, semantic colors for status), 
 
 ---
 
-### [DES-002] App icon and splash screen
+### [DES-002] App icon and splash screen — `DONE`
+> DONE 2026-03-13 — Indigo icon with barcode scanner motif, splash screen, configured in app.json
 **Priority:** P1 | **Effort:** S | **Depends on:** —
 
 Design app icon for iOS and Android. Splash/launch screen. Follows platform guidelines (iOS Human Interface, Material Design).
