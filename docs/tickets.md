@@ -2186,15 +2186,16 @@ Web dashboard uses inline `Intl.NumberFormat` calls instead of the shared `forma
 
 ---
 
-### [QA-016] Add error states to mobile data hooks — `NOT STARTED`
+### [QA-016] Add error states to mobile data hooks — `DONE`
+> DONE 2026-03-13 — useProducts and useOrders now return { data, loading, error, clearError }; orders screen shows error banner + pull-to-refresh; scan screen surfaces lookup errors
 **Priority:** P1 | **Effort:** S | **Depends on:** MOB-003
 
 `useProducts` and `useOrders` hooks return empty/null with no error indication. When PowerSync is implemented, failures will be silent.
 
 **Acceptance Criteria:**
-- [ ] Hooks return `{ data, loading, error }` pattern
-- [ ] Error state shown in UI (toast or inline message)
-- [ ] Loading state shows skeleton/spinner
+- [x] Hooks return `{ data, loading, error }` pattern
+- [x] Error state shown in UI (toast or inline message)
+- [x] Loading state shows skeleton/spinner
 
 ---
 
@@ -2277,18 +2278,19 @@ The most critical API endpoint has no tests. Need to verify: auth validation, id
 
 ---
 
-### [TEST-N005] Unit tests for cart store (Zustand) — `NOT STARTED`
+### [TEST-N005] Unit tests for cart store (Zustand) — `DONE`
+> DONE 2026-03-13 — 22 tests covering add/remove/update/clear, computed totals, discount, variant handling
 **Priority:** P1 | **Effort:** S | **Depends on:** MOB-009
 
 Cart store manages add/remove/update/clear operations and total calculations. No tests verify correctness.
 
 **Acceptance Criteria:**
-- [ ] Test `addItem` — new product creates line, same product increments qty
-- [ ] Test `removeItem` — line removed from cart
-- [ ] Test `updateQuantity` — qty updated, qty=0 removes line
-- [ ] Test `clearCart` — all lines and customer cleared
-- [ ] Test `subtotal`, `taxAmount`, `total` calculations match shared utility
-- [ ] Test with discount applied
+- [x] Test `addItem` — new product creates line, same product increments qty
+- [x] Test `removeItem` — line removed from cart
+- [x] Test `updateQuantity` — qty updated, qty=0 removes line
+- [x] Test `clearCart` — all lines and customer cleared
+- [x] Test `subtotal`, `taxAmount`, `total` calculations match shared utility
+- [x] Test with discount applied
 
 ---
 
