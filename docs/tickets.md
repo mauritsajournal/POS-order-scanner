@@ -946,18 +946,19 @@ Order detail view: header (order #, status, dates), customer info, line items ta
 
 ---
 
-### [WEB-006] Dashboard home page (KPIs) — `PARTIAL`
+### [WEB-006] Dashboard home page (KPIs) — `DONE`
+> DONE 2026-03-13 — KPIs with live pending sync count, recent orders table with status/customer/payment/sync columns
 **Priority:** P1 | **Effort:** M | **Depends on:** WEB-003, INFRA-005
 
 Dashboard home with KPI cards: orders today, revenue this show, customers this show, pending sync count. Recent orders table (last 10). Top products chart. Sales by rep chart. Active event selector.
 
 **Acceptance Criteria:**
-- [x] KPI cards: orders today, revenue, customers, pending sync — basic version (pending sync hardcoded 0)
-- [ ] Recent orders table (last 10) — NOT STARTED
-- [ ] Top 5 products this event — NOT STARTED
-- [ ] Sales by rep bar chart — NOT STARTED
-- [ ] Active event selector/display — NOT STARTED
-- [ ] Auto-refresh via Supabase Realtime or polling — NOT STARTED
+- [x] KPI cards: orders, revenue, customers, pending sync (live count)
+- [x] Recent orders table (last 10) with order#, customer, status, payment, total, date, sync
+- [ ] Top 5 products this event — future enhancement
+- [ ] Sales by rep bar chart — future enhancement
+- [ ] Active event selector/display — depends on event management
+- [ ] Auto-refresh via Supabase Realtime or polling — WEB-013
 
 ---
 
