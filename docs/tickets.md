@@ -512,7 +512,8 @@ Implement network quality detection hook. Detect offline, poor connection (2G), 
 
 ## 4. Mobile App — Alpha Features (MOB-A)
 
-### [MOB-A001] iPhone stacked layout
+### [MOB-A001] iPhone stacked layout — `DONE`
+> DONE 2026-03-13 — Phone portrait with camera top 40%, collapsible PhoneCartSheet bottom sheet, cart badge on tab bar
 **Priority:** P1 | **Effort:** M | **Depends on:** MOB-005
 
 Adapt the scan screen for iPhone (portrait). Camera viewfinder on top, last-scanned product card in middle, collapsible cart summary at bottom as a bottom sheet. Cart badge on tab bar shows item count.
