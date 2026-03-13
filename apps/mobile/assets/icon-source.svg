@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="180" fill="#4F46E5"/>
+
+  <!-- Barcode scanner lines -->
+  <g stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity="0.15">
+    <line x1="200" y1="320" x2="200" y2="704"/>
+    <line x1="260" y1="320" x2="260" y2="704"/>
+    <line x1="300" y1="320" x2="300" y2="704"/>
+    <line x1="360" y1="320" x2="360" y2="704"/>
+    <line x1="400" y1="320" x2="400" y2="704"/>
+    <line x1="480" y1="320" x2="480" y2="704"/>
+    <line x1="540" y1="320" x2="540" y2="704"/>
+    <line x1="580" y1="320" x2="580" y2="704"/>
+    <line x1="640" y1="320" x2="640" y2="704"/>
+    <line x1="700" y1="320" x2="700" y2="704"/>
+    <line x1="760" y1="320" x2="760" y2="704"/>
+    <line x1="824" y1="320" x2="824" y2="704"/>
+  </g>
+
+  <!-- Scanner frame corners -->
+  <g stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" fill="none" opacity="0.9">
+    <!-- Top-left -->
+    <path d="M280 300 L280 260 L320 260"/>
+    <!-- Top-right -->
+    <path d="M704 260 L744 260 L744 300"/>
+    <!-- Bottom-left -->
+    <path d="M280 724 L280 764 L320 764"/>
+    <!-- Bottom-right -->
+    <path d="M704 764 L744 764 L744 724"/>
+  </g>
+
+  <!-- Scan line -->
+  <line x1="260" y1="512" x2="764" y2="512" stroke="#F59E0B" stroke-width="6" opacity="0.8"/>
+
+  <!-- "SO" text -->
+  <text x="512" y="540" text-anchor="middle" font-size="200" font-weight="900" font-family="system-ui, -apple-system, sans-serif" fill="#FFFFFF" opacity="0.95">SO</text>
+</svg>

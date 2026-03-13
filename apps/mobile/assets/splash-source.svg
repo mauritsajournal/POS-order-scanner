@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1284 2778" width="1284" height="2778">
+  <!-- Background -->
+  <rect width="1284" height="2778" fill="#FFFFFF"/>
+
+  <!-- Centered icon (smaller version) -->
+  <g transform="translate(442, 1089)">
+    <rect width="400" height="400" rx="80" fill="#4F46E5"/>
+
+    <!-- Scanner frame corners -->
+    <g stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.9">
+      <path d="M110 115 L110 100 L125 100"/>
+      <path d="M275 100 L290 100 L290 115"/>
+      <path d="M110 285 L110 300 L125 300"/>
+      <path d="M275 300 L290 300 L290 285"/>
+    </g>
+
+    <!-- Scan line -->
+    <line x1="100" y1="200" x2="300" y2="200" stroke="#F59E0B" stroke-width="3" opacity="0.8"/>
+
+    <!-- "SO" text -->
+    <text x="200" y="215" text-anchor="middle" font-size="80" font-weight="900" font-family="system-ui, -apple-system, sans-serif" fill="#FFFFFF" opacity="0.95">SO</text>
+  </g>
+
+  <!-- App name -->
+  <text x="642" y="1600" text-anchor="middle" font-size="48" font-weight="700" font-family="system-ui, -apple-system, sans-serif" fill="#4F46E5">ScanOrder</text>
+</svg>
