@@ -15,7 +15,7 @@ export default function ScanScreen() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
   const { addItem } = useCart();
-  const { lookupByBarcode } = useProductLookup();
+  const { lookupByBarcode, error: lookupError } = useProductLookup();
   const [lastScanned, setLastScanned] = useState<{
     product: Product;
     variant?: ProductVariant;
@@ -43,7 +43,7 @@ export default function ScanScreen() {
       <BarcodeScanner onScan={handleScan} />
       <HardwareScannerInput onScan={handleScan} />
       <SearchBar placeholder="Search product or scan..." context="products" />
-      <ScanFeedback lastScanned={lastScanned} error={scanError} />
+      <ScanFeedback lastScanned={lastScanned} error={lookupError?.message ?? scanError} />
     </View>
   );
 

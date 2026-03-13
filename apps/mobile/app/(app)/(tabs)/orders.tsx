@@ -1,22 +1,47 @@
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useOrders } from '@/hooks/useOrders';
 import { formatPrice, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@scanorder/shared';
 import type { OrderStatus } from '@scanorder/shared';
 
 export default function OrdersScreen() {
-  const { orders, loading } = useOrders();
+  const { orders, loading, error, refresh, clearError } = useOrders();
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+      {error && (
+        <TouchableOpacity
+          onPress={clearError}
+          style={{
+            backgroundColor: '#FEF2F2', borderColor: '#FECACA', borderWidth: 1,
+            margin: 16, marginBottom: 0, padding: 12, borderRadius: 8,
+            flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+          }}
+        >
+          <Text style={{ color: '#DC2626', fontSize: 14, flex: 1 }}>
+            {error.message}
+          </Text>
+          <TouchableOpacity onPress={refresh}>
+            <Text style={{ color: '#DC2626', fontWeight: '600', fontSize: 14, marginLeft: 12 }}>
+              Retry
+            </Text>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      )}
       <FlatList
         data={orders}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 16 }}
+        refreshing={loading}
+        onRefresh={refresh}
         ListEmptyComponent={
           <View style={{ alignItems: 'center', paddingTop: 64 }}>
-            <Text style={{ fontSize: 16, color: '#6B7280' }}>
-              {loading ? 'Loading orders...' : 'No orders yet'}
-            </Text>
+            {loading ? (
+              <ActivityIndicator size="large" color="#6366F1" />
+            ) : (
+              <Text style={{ fontSize: 16, color: '#6B7280' }}>
+                No orders yet
+              </Text>
+            )}
           </View>
         }
         renderItem={({ item }) => {
