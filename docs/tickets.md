@@ -609,7 +609,8 @@ Create new customer from mobile: company name (required), contact name, email, p
 
 ---
 
-### [MOB-A007] Event selection and management
+### [MOB-A007] Event selection and management — `DONE`
+> DONE 2026-03-13 — EventPickerModal with status badges, date formatting, empty state. Events stubbed pending PowerSync.
 **Priority:** P1 | **Effort:** S | **Depends on:** MOB-003
 
 Select active trade show event. Events sync from server. Orders are associated with the selected event. Show event name in header. Event selector in settings or as modal before first order.
