@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { formatPrice, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@scanorder/shared';
 import type { OrderStatus } from '@scanorder/shared';
@@ -62,9 +63,9 @@ export default async function DashboardHome() {
       <div className="bg-white rounded-lg border border-gray-200 mb-8">
         <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-lg font-semibold text-gray-900">Recent Orders</h2>
-          <a href="/orders" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+          <Link href="/orders" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
             View all →
-          </a>
+          </Link>
         </div>
 
         {recentOrders.length === 0 ? (
@@ -106,12 +107,12 @@ export default async function DashboardHome() {
                   return (
                     <tr key={order.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
-                        <a
+                        <Link
                           href={`/orders/${order.id}`}
                           className="text-sm font-semibold text-blue-600 hover:text-blue-800"
                         >
                           {order.order_number ?? `#${order.id.slice(0, 8)}`}
-                        </a>
+                        </Link>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-700">
                         {customerName ?? (

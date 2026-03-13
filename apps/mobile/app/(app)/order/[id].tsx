@@ -27,10 +27,10 @@ export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   // TODO: Query order from local SQLite via PowerSync
-  // const order = useOrderById(id);
-  // const lines = useOrderLines(id);
-  const order: Order | null = null;
-  const lines: OrderLine[] = [];
+  // const { order } = useOrderById(id);
+  // const { lines } = useOrderLines(id);
+  const [order] = useState<Order | null>(null);
+  const [lines] = useState<OrderLine[]>([]);
 
   const handleCancel = useCallback(() => {
     if (!order || order.status !== 'draft') return;

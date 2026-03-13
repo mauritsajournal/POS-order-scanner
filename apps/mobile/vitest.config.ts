@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
   test: {
@@ -9,8 +10,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': new URL('./', import.meta.url).pathname,
-      'expo-crypto': new URL('./__mocks__/expo-crypto.ts', import.meta.url).pathname,
+      '@': path.resolve(__dirname),
+      'expo-crypto': path.resolve(__dirname, '__mocks__/expo-crypto.ts'),
     },
   },
 });

@@ -228,7 +228,6 @@ export default function CatalogScreen() {
         renderItem={viewMode === 'grid' ? renderGridItem : renderListItem}
         keyExtractor={(item) => item.id}
         numColumns={viewMode === 'grid' ? numColumns : 1}
-        estimatedItemSize={viewMode === 'grid' ? 220 : 80}
         contentContainerStyle={{ padding: 16 }}
         ListEmptyComponent={
           <View style={styles.emptyState}>
