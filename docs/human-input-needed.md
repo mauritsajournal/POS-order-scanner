@@ -160,3 +160,13 @@ Once these are done, Claude can continue implementing the remaining P0 tickets (
 - **Notes:** 7 tickets completed this run. All 96 unit tests pass. Web typecheck passes. Mobile typecheck has pre-existing errors in cart.test.ts and vitest.config.ts (not from this run). CI pipeline added. Also completed 11 tickets on fuel-finder-nl (separate project).
 
 ---
+
+## Run Summary — 2026-03-13 15:15 UTC
+
+- **Tickets completed:** #DES-002 (app icon/splash), #DES-003 (offline state visual design), #MOB-A001 (iPhone stacked layout), #INT-001 (integration adapter interface), #INT-009 (EU VIES VAT validation), #MOB-M007 (line item notes/discounts)
+- **Tickets skipped (blocked):** P0 tickets remain blocked on PowerSync/Hyperdrive/Supabase (unchanged). MOB-A009/A010/A013 blocked on PowerSync. POS-004 blocked on MOB-008. WEB-012/013 blocked on INFRA-004/005.
+- **Tickets remaining (workable):** Most remaining P1/P2 tickets are now blocked by infrastructure. WEB-011 needs MOB-M008 first. API-005/006 need INFRA-005.
+- **Infrastructure blockers unchanged:** PowerSync, Hyperdrive, Supabase migrations still need human action
+- **Notes:** 6 tickets completed this run. All 96 unit tests pass. App icon generated from SVG with sharp-cli. Offline design system: OfflineBanner, expanded SyncIndicator, PendingBadge, SyncStatusTag. iPhone scan screen with collapsible cart bottom sheet and cart badge. Integration adapter base class with retry/backoff. VIES VAT validation endpoint. Per-line discounts and notes in cart. Also completed 5 tickets on fuel-finder-nl.
+
+---
