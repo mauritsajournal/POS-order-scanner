@@ -11,10 +11,12 @@ import {
 import { router } from 'expo-router';
 import * as Crypto from 'expo-crypto';
 import { useCart } from '@/store/cart';
-import { formatPrice } from '@scanorder/shared';
+import { useAuth } from '@/store/auth';
+import { formatPrice, lineTotal as calcLineTotal } from '@scanorder/shared';
 
 export default function NewOrderScreen() {
   const { lines, customer, notes, subtotal, taxAmount, total, clearCart } = useCart();
+  const { user } = useAuth();
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit() {
@@ -30,9 +32,17 @@ export default function NewOrderScreen() {
     setSubmitting(true);
 
     // Build order object for local DB insertion (PowerSync)
+    const tenantId = user?.app_metadata?.tenant_id;
+    if (!tenantId) {
+      Alert.alert('Error', 'Missing tenant context. Please sign out and back in.');
+      setSubmitting(false);
+      return;
+    }
+
     const orderId = Crypto.randomUUID();
     const order = {
       id: orderId,
+      tenant_id: tenantId,
       customer_id: customer.id,
       status: 'draft' as const,
       subtotal: subtotal(),
@@ -52,7 +62,7 @@ export default function NewOrderScreen() {
         quantity: l.quantity,
         discount_pct: l.discountPct,
         tax_rate: l.taxRate,
-        line_total: l.unitPrice * l.quantity,
+        line_total: calcLineTotal(l.unitPrice, l.quantity, l.discountPct),
         sort_order: idx,
       })),
     };
@@ -108,7 +118,7 @@ export default function NewOrderScreen() {
               </Text>
             </View>
             <Text style={styles.lineTotal}>
-              {formatPrice(item.unitPrice * item.quantity)}
+              {formatPrice(calcLineTotal(item.unitPrice, item.quantity, item.discountPct))}
             </Text>
           </View>
         )}
