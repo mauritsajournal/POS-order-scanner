@@ -60,6 +60,7 @@ export function detectBarcodeType(
   if (/^\d{13}$/.test(barcode) && isValidEAN13(barcode)) return 'ean-13';
   if (/^\d{8}$/.test(barcode) && isValidEAN8(barcode)) return 'ean-8';
   if (/^\d{12}$/.test(barcode) && isValidUPCA(barcode)) return 'upc-a';
+  // eslint-disable-next-line no-control-regex -- Intentional: Code 128 encodes full ASCII range
   if (/^[\x00-\x7F]+$/.test(barcode) && barcode.length > 1) return 'code-128';
   return 'unknown';
 }
