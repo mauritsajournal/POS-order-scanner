@@ -1013,7 +1013,8 @@ Trade show event CRUD. Fields: name, location, start/end dates, status (upcoming
 
 ---
 
-### [WEB-010] User/team management page
+### [WEB-010] User/team management page — `DONE`
+> DONE 2026-03-13 — Settings page with account info, team members table, role badges, sign out
 **Priority:** P1 | **Effort:** M | **Depends on:** WEB-003, INFRA-005
 
 Manage team members. Invite users by email (Supabase Auth invite). Assign roles: admin, manager, sales_rep. View active devices per user. Deactivate users.
