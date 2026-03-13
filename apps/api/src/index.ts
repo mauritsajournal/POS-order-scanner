@@ -4,6 +4,7 @@ import { logger } from 'hono/logger';
 import { authMiddleware, type AuthUser } from './middleware/auth';
 import { rateLimitMiddleware } from './middleware/rate-limit';
 import { syncUpload } from './routes/sync/upload';
+import { vatValidateHandler } from './routes/vat/validate';
 import { API } from '@scanorder/shared';
 
 type Bindings = {
@@ -56,6 +57,9 @@ app.use('/api/*', rateLimitMiddleware);
 
 // PowerSync upload handler
 app.post('/api/sync/upload', syncUpload);
+
+// VAT validation
+app.post('/api/vat/validate', vatValidateHandler);
 
 // Webhook stubs (will be implemented in later phases)
 // Webhooks use their own auth (HMAC signatures), so they're outside /api/*
